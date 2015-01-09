@@ -1,4 +1,4 @@
-(FLAGS = -Wall -Wextra -O2 -g
+CFLAGS = -Wall -Wextra -O2 -g
 all: client serveur
 client: client.o
 	gcc $^ -o $@
