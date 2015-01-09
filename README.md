@@ -1,4 +1,4 @@
-# ChatBox
+# ChatBox Groupe O
 
 Utilisation du GIT :
 
