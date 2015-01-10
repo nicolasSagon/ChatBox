@@ -1,4 +1,7 @@
-#include <protocole.h>
+#ifndef CLIENTCHATBOX
+#define CLIENTCHATBOX
+
+#include "protocole.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -54,4 +57,4 @@ int main (int argc, char *argv[])
   return 0;
 }
 
-
+#endif

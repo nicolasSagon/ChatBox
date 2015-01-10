@@ -3,13 +3,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#define TAILLEDATA = 140;
-
-struct chat_message
-{
-	struct Header header;
-	char data[TAILLEDATA];
-};
+#define TAILLEDATA 140
 
 struct Header
 {
@@ -20,6 +14,13 @@ struct Header
 	int taille;
 	int numMessage;
 };
+
+struct Chat_message
+{
+	struct Header header;
+	char data[TAILLEDATA];
+};
+
 
 enum Commande {
 

@@ -1,4 +1,7 @@
-#include "protocole.h";
+#ifndef SERVERCHATBOX
+#define SERVERCHATBOX
+
+#include "protocole.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -42,4 +45,4 @@ int main(void)
   return 0;
 }
 
-
+#endif
