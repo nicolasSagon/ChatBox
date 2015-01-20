@@ -1,9 +1,0 @@
-CFLAGS = -Wall -Wextra -O2 -g
-all: ClientChatBox ServeurChatBox
-client: ClientChatBox.o
-	gcc $^ -o $@
-serveur: ServeurChatBox.o 
-	gcc $^ -o $@
-ClientChatBox.o ServeurChatBox.o : protocole.h
-clean:
-	@rm *.o ClientChatBox ServeurChatBox
