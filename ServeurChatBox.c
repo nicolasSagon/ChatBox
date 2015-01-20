@@ -84,13 +84,14 @@ struct ListRoom *initalizationRoom(){
 	return listRoom;
 }
 
-void addRoom(char* name){
+struct Room addRoom(char* name){
 	struct Room *room= malloc(sizeof(*room));
 	room->id=idRoom;
 	strcpy(room->name,name);
 	room->roomNext=listRoom->first;
 	listRoom->first=room;
 	idRoom++;
+	return *room;
 }
 
 void deleteRoom(int id){
@@ -192,13 +193,55 @@ void disconnectServer(struct Header header){
 
 void say(struct Chat_message messageRecu){
 
-	//trouver si salon exit
 	
-	
-	//si existe pas le créer
 }
 
 void join(struct Chat_message messageRecu){
+	//recherche si le salon recut est existe sinon on le crée
+	printf("join to :%s\n", messageRecu.data);
+	struct Room *room=listRoom->first;
+	int find=0,findUser=0, idVid=99;
+	struct Room newRoom;
+	if (room->roomNext != NULL){
+		while (room->roomNext != NULL && find==0){
+			printf("boucle while\n");
+			if (strcmp (room->name, messageRecu.data) == 0){
+				findUser=1;
+				printf("salon deja crée\n");
+				//recherche si l'utilisateur est deja dans le salon
+				int i;
+				for (i=0;i<10;i++){
+					if(room->idUser[i]==messageRecu.header.idUtilisateur){
+						findUser=1;
+						printf("Ajout de l'utilisateur au salon %s imposible\n",messageRecu.data);
+					}
+					if(room->idUser[i]==NULL){
+						idVid=i;
+					}
+				}
+				if (findUser==0 && idVid != 99){
+					//ajout de l'utilisateur dans le salon
+					room->idUser[idVid]=messageRecu.header.idUtilisateur;
+				}
+				find=1;
+			}
+			else {
+				room=room->roomNext;
+			}
+		}
+		if (find==0){
+			printf("salon non crée\n");
+			newRoom=addRoom(messageRecu.data);
+			newRoom.idUser[0]=messageRecu.header.idUtilisateur;
+			find=1;
+		}
+	}
+	else{
+		printf("salon non crée\n");
+		newRoom=addRoom(messageRecu.data);
+		newRoom.idUser[0]=messageRecu.header.idUtilisateur;
+	}
+	displayListRoom();
 
 }
 
@@ -218,6 +261,7 @@ int main(void)
 {
 
   listUser = initalization();
+  listRoom =initalizationRoom();
   int sd, n;
   socklen_t addr_len;
   struct sockaddr_in client_addr, server_addr;
