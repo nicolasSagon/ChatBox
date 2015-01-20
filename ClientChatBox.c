@@ -8,21 +8,23 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <time.h>
 #define SERVER_PORT 1500
 #define MAX_MSG 80
 int main (int argc, char *argv[])
 {
   int sd;
-  struct Chat_message messageRecu;
+  struct Chat_message messageEnvoye;
   char * temp;
+  char buffer[TAILLEDATA];
   temp="test";
-  strcpy(messageRecu.data,temp);
-  messageRecu.header.commande=CONNECT;
-  messageRecu.header.idUtilisateur=1;
-  messageRecu.header.timestamp=NULL;
-  messageRecu.header.idSalon=1;
-  messageRecu.header.taille=sizeof(messageRecu.data);
-  messageRecu.header.numMessage=1; 
+  strcpy(messageEnvoye.data,temp);
+  messageEnvoye.header.commande=CONNECT;
+  messageEnvoye.header.idUtilisateur=1;
+  messageEnvoye.header.timestamp=time(NULL);
+  messageEnvoye.header.idSalon=1;
+  messageEnvoye.header.taille=sizeof(messageEnvoye.data);
+  messageEnvoye.header.numMessage=1; 
    
   struct sockaddr_in client_addr, serv_addr;
   printf("%s: trying to send to %s\n", argv[0], argv[1]);
@@ -51,15 +53,34 @@ int main (int argc, char *argv[])
   serv_addr.sin_port = htons(SERVER_PORT);
   // send all messages
   
-    if (sendto(sd, &messageRecu, sizeof(messageRecu) + 1, 0,
-          (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)
+    if (sendto(sd, &messageEnvoye, sizeof(messageEnvoye) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)
     {
       perror("sendto");
       return 1;
     } else {
       printf("Sent to %s\n", inet_ntoa(serv_addr.sin_addr) );
     }
+  // Waiting for instructions
+  while(1){
+  scanf("%s",&buffer);
+  strcpy(messageEnvoye.data,buffer);
+  messageEnvoye.header.commande=SAY;
+  messageEnvoye.header.idUtilisateur=1;
+  messageEnvoye.header.timestamp=time(NULL);
+  messageEnvoye.header.idSalon=1;
+  messageEnvoye.header.taille=sizeof(messageEnvoye.data);
+  messageEnvoye.header.numMessage=2;
+  if (sendto(sd, &messageEnvoye, sizeof(messageEnvoye) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)
+    {
+      perror("sendto");
+      return 1;
+    } else {
+      printf("Sent to %s\n", inet_ntoa(serv_addr.sin_addr) );
+    }
+
+  }  
   
+
   close(sd);
   return 0;
 }
