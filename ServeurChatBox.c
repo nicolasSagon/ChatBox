@@ -9,6 +9,69 @@
 #include <arpa/inet.h>
 #define SERVER_PORT 1500
 #define MAX_MSG 80
+
+void decripteHeader(struct Chat_message messageRecu,int sd){
+	switch  (messageRecu.header.commande){
+	
+	case CONNECT:
+		connect(sd,messageRecu.data);
+	break;
+	
+	case JOIN:
+		join(messageRecu)
+	break;
+	
+	case SAY:
+		say(messageRecu);
+	break;
+	
+	case LEAVE:
+		leave(messageRecu.header);
+	break;
+	
+	case DISCONNECT:
+		disconnect(messageRecu);
+	break;
+	
+	case ACK:
+		ack(messageRecu);
+	break;
+	
+	case ALIVE:
+		alive(messageRecu.header);
+	break;
+
+	}
+}
+
+void connect(int sd, char* userName){
+	
+}
+
+void disconnect(struct Chat_message messageRecu){
+	
+}
+
+void say(struct Chat_message messageRecu){
+
+}
+
+void join(struct Chat_message messageRecu){
+
+}
+
+void leave(struct Header header ){
+
+}
+
+void alive(struct Header header){
+
+}
+
+void ack(struct Chat_message messageRecu){
+
+}
+
 int main(void)
 {
   int sd, n;
