@@ -39,11 +39,29 @@ struct User {
 	int id;
 	char name[50];
 	int sd;
+	struct User *userNext;
+};
 
+<<<<<<< HEAD
 };
 
 struct Room {
 
 	int id;
 	//struct User[10];
+=======
+struct ListUser {
+	struct User *first;
+};
+struct Room {
+
+	int id;
+	char name[50];
+	int  idUser[10];
+	struct Room *roomNext;
+};
+
+struct ListRoom {
+	struct Room *first;
+>>>>>>> 3807a719bdb6dae8562b07d1b2bed5290a8f69b9
 };
