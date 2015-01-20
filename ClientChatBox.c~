@@ -25,6 +25,9 @@ int main (int argc, char *argv[])
   messageRecu.header.numMessage=1; 
    
   struct sockaddr_in client_addr, serv_addr;
+  // Command-line error check
+  if (argc < 3)
+    return 1;
   printf("%s: trying to send to %s\n", argv[0], argv[1]);
   // Create socket
   if ((sd = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
