@@ -3,6 +3,12 @@
 *.ko
 *.obj
 *.elf
+*~
+*.c~
+
+
+ServeurChatBox
+ClientChatBox
 
 # Precompiled Headers
 *.gch

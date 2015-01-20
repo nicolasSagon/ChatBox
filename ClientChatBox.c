@@ -11,6 +11,7 @@
 #include <time.h>
 #define SERVER_PORT 1500
 #define MAX_MSG 80
+
 int main (int argc, char *argv[])
 {
   int sd;
