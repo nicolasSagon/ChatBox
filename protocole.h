@@ -42,14 +42,6 @@ struct User {
 	struct User *userNext;
 };
 
-<<<<<<< HEAD
-};
-
-struct Room {
-
-	int id;
-	//struct User[10];
-=======
 struct ListUser {
 	struct User *first;
 };
@@ -63,5 +55,4 @@ struct Room {
 
 struct ListRoom {
 	struct Room *first;
->>>>>>> 3807a719bdb6dae8562b07d1b2bed5290a8f69b9
 };
