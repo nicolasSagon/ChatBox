@@ -1,2 +1,6 @@
-char * getCmd(char * buffer);
-char * getData(char * buffer);
+#ifndef CLIENTFUNCTIONS.H
+#define CLIENTFUNCTIONS.H
+
+char * getData(char * );
+
+#endif

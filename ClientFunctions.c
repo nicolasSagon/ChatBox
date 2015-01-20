@@ -1,18 +1,13 @@
-#ifndef CLIENTFUNCTIONS
-#define CLIENTFUNCTIONS
-#include "ClientFunctions.h"
+#ifndef CLIENTFUNCTIONS.C
+#define CLIENTFUNCTIONS.C
 #include <string.h>
 
-char * getCmd(char * buffer){
-  char * commande;
-  char * pch = strtok (buffer," ");
-  strcpy(commande, pch);
-  return commande;
-}
 
-char * getData(char * buffer){
-  char * data;
-  char * pch;
+char* getData(char *buffer){
+  char *data = NULL;
+  char *pch = NULL;
+  
+  //strcat(data, "");
   
   while (pch != NULL)
   {
@@ -22,6 +17,7 @@ char * getData(char * buffer){
      strcat(data, " "); 
     }
   }
+  printf("%s",data);
   return data;
 }
 #endif

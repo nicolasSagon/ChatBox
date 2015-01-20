@@ -1,11 +1,6 @@
 #ifndef PROTOCOLE
 #define PROTOCOLE
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #define TAILLEDATA 140
 
 struct Header
