@@ -9,15 +9,73 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <time.h>
+#include <pthread.h>
+#include <sys/types.h>
 #define SERVER_PORT 1500
 #define MAX_MSG 80
 
+struct Chat_message messageEnvoye;
+int sd;
+struct sockaddr_in client_addr, serv_addr;
+
+int getCommande(char * str){
+  if(strcmp(str, "CONNECT") == 0)
+    return 0;
+  else if(strcmp(str, "JOIN") == 0)
+    return 1;
+  else if(strcmp(str, "SAY") == 0)
+    return 2;
+  else if(strcmp(str, "LEAVE") == 0)
+    return 3;
+  else if(strcmp(str, "DISCONNECT") == 0)
+    return 4;
+  else if(strcmp(str, "ACK") == 0)
+    return 5;
+  else if(strcmp(str, "ALIVE") == 0)
+    return 6;
+  else if(strcmp(str, "MESSAGE_SERVER") == 0)
+    return 7;
+  else
+    return -1;
+  
+}
+
+void *timer(void *arg) {
+  int i;
+  printf("Thread lancé\n");
+  for (;;)
+  {
+    usleep(15000);
+    strcpy(messageEnvoye.data,"");
+    messageEnvoye.header.commande=6;
+    messageEnvoye.header.idUtilisateur=1;
+    messageEnvoye.header.timestamp=time(NULL);
+    messageEnvoye.header.idSalon=1;
+    messageEnvoye.header.taille=sizeof(messageEnvoye.data);
+    messageEnvoye.header.numMessage=1; 
+    if (sendto(sd, &messageEnvoye, sizeof(messageEnvoye) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)
+    {
+      perror("sendto");
+      exit(0);
+    }
+    else{
+      printf("Je vole!!");      
+    }
+  }
+  pthread_exit(0);
+}
+
 int main (int argc, char *argv[])
 {
-  int sd;
-  struct Chat_message messageEnvoye;
+  
+  pthread_t th_timer;
+ 
   char * temp;
   char buffer[TAILLEDATA];
+  char *commande;
+  char *data;
+  char *pch;
+  
   temp="test";
   strcpy(messageEnvoye.data,temp);
   messageEnvoye.header.commande=CONNECT;
@@ -26,8 +84,9 @@ int main (int argc, char *argv[])
   messageEnvoye.header.idSalon=1;
   messageEnvoye.header.taille=sizeof(messageEnvoye.data);
   messageEnvoye.header.numMessage=1; 
-   
-  struct sockaddr_in client_addr, serv_addr;
+  
+  strcpy(data, "");
+    
   printf("%s: trying to send to %s\n", argv[0], argv[1]);
   // Create socket
   if ((sd = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
@@ -61,11 +120,34 @@ int main (int argc, char *argv[])
     } else {
       printf("Sent to %s\n", inet_ntoa(serv_addr.sin_addr) );
     }
-  // Waiting for instructions
+   Waiting for instructions
+  if (pthread_create(&th_timer, NULL, timer, NULL) != 0)
+  {
+    perror("Erreur création du thread timer\n");
+    exit(-1);
+  }
+  
   while(1){
-  scanf("%s",&buffer);
-  strcpy(messageEnvoye.data,buffer);
-  messageEnvoye.header.commande=SAY;
+  
+  fgets(buffer, 140, stdin);
+  
+  pch = strtok (buffer," ");
+  
+  strcpy(commande, pch);
+  while (pch != NULL)
+  {
+    pch = strtok (NULL, " ,.-");
+    if(pch != NULL){
+     strcat(data, pch);
+     strcat(data, " "); 
+    }
+  }
+  
+  printf("Commande = %s\n", commande);
+  printf("Data = %s\n", data);
+ 
+  strcpy(messageEnvoye.data,data);
+  messageEnvoye.header.commande=getCommande(commande);
   messageEnvoye.header.idUtilisateur=1;
   messageEnvoye.header.timestamp=time(NULL);
   messageEnvoye.header.idSalon=1;
@@ -79,8 +161,7 @@ int main (int argc, char *argv[])
       printf("Sent to %s\n", inet_ntoa(serv_addr.sin_addr) );
     }
 
-  }  
-  
+  } 
 
   close(sd);
   return 0;
