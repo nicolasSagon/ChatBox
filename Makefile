@@ -1,11 +1,15 @@
 CFLAGS = -Wall -Wextra -O2 -g -lpthread
-all: ClientChatBox ServeurChatBox ClientFunctions
-ClientChatBox: ClientChatBox.o
-	gcc $^ -o $@
-ServeurChatBox: ServeurChatBox.o 
-	gcc $^ -o $@
-ClientFunctions: ClientFunctions.o 
-	gcc $^ -o $@
-ClientChatBox.o ServeurChatBox.o ClientFunctions.o : protocole.h ClientFunctions.h
+Th_Flag = -lpthread
+all: Client Serveur
+Client: ClientChatBox.o ClientFunctions.o
+	gcc -o $@ $^ $(Th_Flag)
+ClientFunctions.o: ClientFunctions.c
+	gcc -o $@ -c $< $(CFLAGS)
+ClientChatBox.o: ClientChatBox.c ClientFunctions.h protocole.h
+	gcc -o $@ -c $< $(CFLAGS)
+Serveur: ServeurChatBox.o 
+	gcc -o $@ $^
+ServeurChatBox.o: ServeurChatBox.c protocole.h
+	gcc -o $@ -c $< $(CFLAGS)
 clean:
-	@rm *.o ClientChatBox ServeurChatBox
+	@rm *.o Client Serveur
