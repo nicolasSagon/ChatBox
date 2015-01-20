@@ -34,3 +34,16 @@ enum Commande {
 	MESSAGE_SERVER = 7
 };
 
+struct User {
+
+	int id;
+	char name[50];
+	int sd;
+
+}
+
+struct Room {
+
+	int id;
+	struct User[10];
+}
