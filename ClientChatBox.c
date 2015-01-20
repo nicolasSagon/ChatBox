@@ -2,6 +2,8 @@
 #define CLIENTCHATBOX
 
 #include "protocole.h"
+#include "ClientFunctions.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -135,18 +137,9 @@ int main (int argc, char *argv[])
   
   fgets(buffer, 140, stdin);
   
-  pch = strtok (buffer," ");
-  
-  strcpy(commande, pch);
+  strcpy(commande, getCmd(buffer));
       
-  while (pch != NULL)
-  {
-    pch = strtok (NULL, " ,.-");
-    if(pch != NULL){
-     strcat(data, pch);
-     strcat(data, " "); 
-    }
-  }
+  strcpy(data, getData(buffer));
   
   printf("Commande = %s\n", commande);
   printf("Data = %s\n", data);

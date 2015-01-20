@@ -1,3 +1,6 @@
+#ifndef PROTOCOLE
+#define PROTOCOLE
+
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -56,3 +59,7 @@ struct Room {
 struct ListRoom {
 	struct Room *first;
 };
+
+
+
+#endif
