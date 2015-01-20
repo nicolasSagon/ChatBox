@@ -14,7 +14,6 @@
 #define SERVER_PORT 1500
 #define MAX_MSG 80
 
-struct Chat_message messageEnvoye;
 int sd;
 struct sockaddr_in client_addr, serv_addr;
 
@@ -42,10 +41,11 @@ int getCommande(char * str){
 
 void *timer(void *arg) {
   int i;
+  struct Chat_message messageEnvoye;
   printf("Thread lancé\n");
   for (;;)
   {
-    usleep(15000);
+    usleep(15000000);
     strcpy(messageEnvoye.data,"");
     messageEnvoye.header.commande=6;
     messageEnvoye.header.idUtilisateur=1;
@@ -56,10 +56,10 @@ void *timer(void *arg) {
     if (sendto(sd, &messageEnvoye, sizeof(messageEnvoye) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)
     {
       perror("sendto");
-      exit(0);
+      pthread_exit((void*) 1);
     }
     else{
-      printf("Je vole!!");      
+      printf("Je vole!!\n");      
     }
   }
   pthread_exit(0);
@@ -69,11 +69,13 @@ int main (int argc, char *argv[])
 {
   
   pthread_t th_timer;
- 
+  
+  struct Chat_message messageEnvoye;
+  
   char * temp;
   char buffer[TAILLEDATA];
-  char *commande;
-  char *data;
+  char commande[20];
+  char data[TAILLEDATA];
   char *pch;
   
   temp="test";
@@ -86,8 +88,10 @@ int main (int argc, char *argv[])
   messageEnvoye.header.numMessage=1; 
   
   strcpy(data, "");
+  strcpy(commande, "");
     
   printf("%s: trying to send to %s\n", argv[0], argv[1]);
+  
   // Create socket
   if ((sd = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
   {
@@ -120,11 +124,11 @@ int main (int argc, char *argv[])
     } else {
       printf("Sent to %s\n", inet_ntoa(serv_addr.sin_addr) );
     }
-   Waiting for instructions
+   //Waiting for instructions
   if (pthread_create(&th_timer, NULL, timer, NULL) != 0)
   {
     perror("Erreur création du thread timer\n");
-    exit(-1);
+    return 1;
   }
   
   while(1){
@@ -134,6 +138,7 @@ int main (int argc, char *argv[])
   pch = strtok (buffer," ");
   
   strcpy(commande, pch);
+      
   while (pch != NULL)
   {
     pch = strtok (NULL, " ,.-");

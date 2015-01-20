@@ -40,10 +40,10 @@ struct User {
 	char name[50];
 	int sd;
 
-}
+};
 
 struct Room {
 
 	int id;
-	struct User[10];
-}
+	//struct User[10];
+};
