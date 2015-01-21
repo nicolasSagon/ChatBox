@@ -3,10 +3,13 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "protocole.h"
+#include <stdlib.h>
+#include "ServeurChatBox.h"
 
 #define SERVER_PORT 1500
 #define MAX_MSG 80
@@ -413,7 +416,7 @@ int main(void)
     if (n == -1)
       perror("recvfrom");
     else {
-		printf("received from %s: %d\n", inet_ntoa(client_addr.sin_addr), messageRecu.header.commande);
+		printf("received from %s: %d  -  %s\n", inet_ntoa(client_addr.sin_addr), messageRecu.header.commande, messageRecu.data);
 		decripteHeader(messageRecu, client_addr);
     }
   }
