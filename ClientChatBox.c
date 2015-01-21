@@ -75,14 +75,14 @@ void *msgServer(){
 		if (n == -1)
 			perror("recvfrom");
 		else {
-			printf("received from %s: %d\n", inet_ntoa(serv_addr.sin_addr), msgServer.header.commande);
+			printf("received from %s: %s\n", inet_ntoa(serv_addr.sin_addr), msgServer.data);
 		}
 	}
 	pthread_exit(0);
 }
 
 	struct Chat_message msgConnection(struct Chat_message messageEnvoye){
-	strcpy(messageEnvoye.data,"");
+	strcpy(messageEnvoye.data,"test");
 	messageEnvoye.header.commande=CONNECT;
 	messageEnvoye.header.idUtilisateur=0;
 	messageEnvoye.header.timestamp=time(NULL);
