@@ -210,7 +210,7 @@ int main (int argc, char *argv[]){
 // 		printf("Commande = %i\n", messageEnvoye.header.commande);  //Debug
 // 		printf("Data = %s\n", messageEnvoye.data);  //Debug
 		
-		messageEnvoye.header.idUtilisateur=1;
+		messageEnvoye.header.idUtilisateur=idUser;
 		messageEnvoye.header.timestamp=time(NULL);
 		messageEnvoye.header.idSalon=1;
 		messageEnvoye.header.taille=sizeof(messageEnvoye.data);
