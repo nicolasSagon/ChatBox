@@ -311,22 +311,22 @@ void join(struct Chat_message messageRecu){
 				for (i=0;i<maxUserSalon;i++){
 					if(room->idUser[i]==messageRecu.header.idUtilisateur){
 						findUser=1;
-						printf("Ajout de l'utilisateur au salon %s imposible\n",messageRecu.data);
 					}
 					if(room->idUser[i] == 0){
-						printf("id a remplir %d\n", i);
 						idVid=i;
 					}else
 					{
-						
 						idVid=99;
 					}
 				}
-				printf("FIN FOR id %d, findUser = %d",idVid, findUser);
 				if (findUser==0 && idVid != 99){
 					printf("id %d\n",idVid);
 					//ajout de l'utilisateur dans le salon
 					room->idUser[idVid]=messageRecu.header.idUtilisateur;
+					ackJoin(room->id,messageRecu.header.idUtilisateur,"1");
+				}
+				else{
+					ackJoin("0",messageRecu.header.idUtilisateur,"0");
 				}
 				find=1;
 			}
@@ -338,17 +338,32 @@ void join(struct Chat_message messageRecu){
 			newRoom=addRoom(messageRecu.data);
 			//printf("id utilisateur %d\n",messageRecu.header.idUtilisateur);
 			newRoom->idUser[0]=messageRecu.header.idUtilisateur;
+			ackJoin(newRoom->id,messageRecu.header.idUtilisateur,"1");
 			find=1;
 		}
 	}
 	else{
 		newRoom=addRoom(messageRecu.data);
 		newRoom->idUser[0]=messageRecu.header.idUtilisateur;
+		ackJoin(newRoom->id,messageRecu.header.idUtilisateur,"1");
 		//printf("Valeur idUser dans room %d\n", newRoom->idUser[0]);
 	}
 	displayListRoom();
 }
-
+void ackJoin (int idRoom, int idUser,int etat){
+	struct User *userMsgEnvoie;
+	struct Chat_message messageEnvoye;
+	userMsgEnvoie=findUser(idUser);
+	strcpy(messageEnvoye.data, etat);
+	messageEnvoye.header.commande = ACK;
+	messageEnvoye.header.idUtilisateur=idUser;
+	messageEnvoye.header.timestamp=time(NULL);
+	messageEnvoye.header.idSalon=idRoom;
+	messageEnvoye.header.taille=sizeof(messageEnvoye.data);
+	messageEnvoye.header.numMessage=0;
+	
+	sendMessage(userMsgEnvoie->client_addr, messageEnvoye);
+}
 void leave(struct Header header ){
 	struct Room *room=listRoom->first;
 	int find=0,findUser=0,i,nbUser=0;
@@ -378,9 +393,7 @@ void alive(struct Header header){
 void ack(struct Chat_message messageRecu){
 
 }
-void sendAck(char* data){
 
-}
 
 int main(void)
 {
