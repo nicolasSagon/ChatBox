@@ -142,7 +142,7 @@ void displayListRoom(){
 	struct Room *room=listRoom->first;
 	while (room->roomNext != NULL ){
 		//printf("room name : %s id %d persone %d\n", room->name, room->id, room->idUser[0]);
-		printf("room name : %s id %d\n", room->name, room->id);
+		//printf("room name : %s id %d\n", room->name, room->id);
 		room=room->roomNext;
 	}
 }
@@ -243,13 +243,9 @@ void disconnectServer(struct Header header){
 struct User* findUser(int id){
 	struct User *user=listUser->first;
 	int find=0;
-	
-	
 	while (user->userNext != NULL && find==0){
-		printf("FindUser%d\n",user->id);
 		if(user->id==id){
 			find=1;
-			printf("user : %s\n",user->name);
 			return user;
 		}
 		else {
@@ -264,17 +260,10 @@ void say(struct Chat_message messageRecu){
 	struct Room *room=listRoom->first;
 	struct Chat_message messageEnvoye;
 	int i,find=0;
-	printf("passage dans say");
- 	for(i = 0; i < maxUserSalon; i++)
- 	{
- 		printf("ID = %d\n", room->idUser[i]);
- 	}
 	if (room->roomNext != NULL){
 		while (room->roomNext != NULL && find==0){
-			printf("Boucle while\n");
 			if (room->id==messageRecu.header.idSalon){
 				// header : 
-				printf("Boucle if salon\n");
 				struct User *userMsgRecu;
 				userMsgRecu=findUser(messageRecu.header.idUtilisateur);
 				strcpy(messageEnvoye.data,userMsgRecu->name);
@@ -288,18 +277,12 @@ void say(struct Chat_message messageRecu){
 				messageEnvoye.header.numMessage=room->numMsg;
 				room->numMsg++;
 				for (i=0;i<maxUserSalon;i++){
-					if(room->idUser[i]!=0){
-						printf("ID dans la room :%d\n",room->idUser[i]);
-					}
-				}
-				for (i=0;i<maxUserSalon;i++){
 					printf("Boucle for\n");
-					if(room->idUser[i]!=NULL){
-						printf("Message a envoyer a id :%d\n",room->idUser[i]);
+					if(room->idUser[i]!=NULL && room->idUser[i]!=messageRecu.header.idUtilisateur){
+						//printf("Message a envoyer a id :%d\n",room->idUser[i]);
 						// aller cherche clients adresse
 						struct User *userMsgEnvoie;
 						userMsgEnvoie=findUser(room->idUser[i]);
-						printf("Id avant le send%d\n",userMsgEnvoie->id);
 						// ajout code envoie de message					
 						sendMessage(userMsgEnvoie->client_addr, messageEnvoye);
 					}
@@ -315,7 +298,6 @@ void say(struct Chat_message messageRecu){
 
 void join(struct Chat_message messageRecu){
 	//recherche si le salon recut est existe sinon on le crée
-	printf("join to :%s\n", messageRecu.data);
 	struct Room *room=listRoom->first;
 	int find=0,findUser=0, idVid=0;
 	struct Room *newRoom;
@@ -375,8 +357,9 @@ void leave(struct Header header ){
 			find=1;
 			for (i=0;i<maxUserSalon;i++){
 				if(room->idUser[i]==header.idUtilisateur){
-					//printf("trouver utilisateur dans salon dans %d\n", i);
+					printf("trouver utilisateur dans salon dans %d\n", i);
 					room->idUser[i]=0;
+					printf("Velur tab i%d\n",room->idUser[i]);
 					findUser=1;
 				}
 			}
