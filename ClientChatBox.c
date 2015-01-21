@@ -42,18 +42,18 @@ int cmdStrToInt(char * str){
 }
 
 void *timer() {
-	struct Chat_message messageEnvoye;
+	struct Chat_message msgKeepAlive;
 	//printf("Thread lancé\n");   //Debug
 	for (;;){
 		usleep(15000000);
-		strcpy(messageEnvoye.data,"");
-		messageEnvoye.header.commande=6;
-		messageEnvoye.header.idUtilisateur=1;
-		messageEnvoye.header.timestamp=time(NULL);
-		messageEnvoye.header.idSalon=1;
-		messageEnvoye.header.taille=sizeof(messageEnvoye.data);
-		messageEnvoye.header.numMessage=1; 
-		if (sendto(sd, &messageEnvoye, sizeof(messageEnvoye) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1){
+		strcpy(msgKeepAlive.data,"");
+		msgKeepAlive.header.commande=6;
+		msgKeepAlive.header.idUtilisateur=1;
+		msgKeepAlive.header.timestamp=time(NULL);
+		msgKeepAlive.header.idSalon=1;
+		msgKeepAlive.header.taille=sizeof(msgKeepAlive.data);
+		msgKeepAlive.header.numMessage=1; 
+		if (sendto(sd, &msgKeepAlive, sizeof(msgKeepAlive) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1){
 			perror("sendto\n");
 			pthread_exit((void*) 1);
 		}
@@ -64,18 +64,38 @@ void *timer() {
 	pthread_exit(0);
 }
 
+void *msgServer(){
+	struct Chat_message msgServer;
+	int n;
+	socklen_t addr_len;
+	
+	addr_len = sizeof(serv_addr);
+	while(1){
+		n = recvfrom(sd, &msgServer, MAX_MSG, 0,(struct sockaddr *)&serv_addr, &addr_len);
+		if (n == -1)
+			perror("recvfrom");
+		else {
+			printf("received from %s: %d\n", inet_ntoa(serv_addr.sin_addr), msgServer.header.commande);
+		}
+	}
+	pthread_exit(0);
+}
+
 int main (int argc, char *argv[]){
 	
 	pthread_t th_timer;
+	pthread_t th_msgServer;
 	
 	struct Chat_message messageEnvoye;
 	struct Chat_message messageRecu;
+	socklen_t addr_len;
 	
 	char buffer[TAILLEDATA];
 	char saveBuffer[TAILLEDATA];
 	char commande[20];
 	char data[TAILLEDATA];
 	char *mot;
+	int n;
 	
 	strcpy(messageEnvoye.data,"");
 	messageEnvoye.header.commande=CONNECT;
@@ -127,16 +147,20 @@ int main (int argc, char *argv[]){
 		perror("Erreur création du thread timer\n");
 		return 1;
 	}
+// 	Création du thread MessageServer
+	if (pthread_create(&th_msgServer, NULL, msgServer, NULL) != 0){
+		perror("Erreur création du thread MESSAGE_SERVER\n");
+		return 1;
+	}
 	
 	//Attente reception confirmation serveur
-	n = recvfrom(sd, &messageRecu, MAX_MSG, 0,(struct sockaddr *)&client_addr, &addr_len);
+	addr_len = sizeof(serv_addr);
+	n = recvfrom(sd, &messageRecu, MAX_MSG, 0,(struct sockaddr *)&serv_addr, &addr_len);
     if (n == -1)
 		perror("recvfrom");
 	else {
-		printf("received from %s: %d\n", inet_ntoa(client_addr.sin_addr), messageRecu.header.commande);
+		printf("received from %s: %d\n", inet_ntoa(serv_addr.sin_addr), messageRecu.header.commande);
     }
-    
-	recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *ad ,socklen_t *ad_len);
 	
 	while(1){
 	//printf("debug: entree dans boucle while 1\n");
@@ -164,7 +188,6 @@ int main (int argc, char *argv[]){
 			while (mot != NULL){ //Extraction de data
 				strcat(data, mot);
 				strcat(data, " ");
-				printf("Salut\n");
 				mot = strtok (NULL, " ,.-");
 			}
 			strcpy(messageEnvoye.data, data);
