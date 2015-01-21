@@ -21,21 +21,22 @@ int sd;
 struct sockaddr_in client_addr, serv_addr;
 
 int cmdStrToInt(char * str){
-	if(strcmp(str, "CONNECT") == 0)
+	printf("%s\n",str);
+	if(strstr(str, "CONNECT") != NULL)
 		return 0;
-	else if(strcmp(str, "JOIN") == 0)
+	else if(strstr(str, "JOIN") != NULL)
 		return 1;
-	else if(strcmp(str, "SAY") == 0)
+	else if(strstr(str, "SAY") != NULL)
 		return 2;
-	else if(strcmp(str, "LEAVE") == 0)
+	else if(strstr(str, "LEAVE") != NULL)
 		return 3;
-	else if(strcmp(str, "DISCONNECT") == 0)
+	else if(strstr(str, "DISCONNECT") != NULL)
 		return 4;
-	else if(strcmp(str, "ACK") == 0)
+	else if(strstr(str, "ACK") != NULL)
 		return 5;
-	else if(strcmp(str, "ALIVE") == 0)
+	else if(strstr(str, "ALIVE") != NULL)
 		return 6;
-	else if(strcmp(str, "MESSAGE_SERVER") == 0)
+	else if(strstr(str, "MESSAGE_SERVER") != NULL)
 		return 7;
 	else
 		return -1;
@@ -177,20 +178,20 @@ int main (int argc, char *argv[]){
 	}
 	
 	while(1){
-	//printf("debug: entree dan<<<<<<< HEADs boucle while 1\n");
-	
+	//printf("debug: entree dans boucle while 1\n");
+
 		if(fgets(buffer, 140, stdin) != NULL){
 			//printf("debug: fgets ok\n");
 			strcpy(saveBuffer, buffer);
 		}
 		else
-		perror("debug: Erreur fgets\n");
+			perror("debug: Erreur fgets\n");
 
 		strcpy(commande, strtok(buffer," ")); //Extraction de la commande (Buffer jusqu'au premier espace)		
 
 		strcpy(messageEnvoye.data, ""); //reset des strings
 		strcpy(data, "");//reset des strings
-		
+
 		if(cmdStrToInt(commande) == -1){ //si cmd non définie
 			messageEnvoye.header.commande = 2; // c'est un SAY
 			strcpy(messageEnvoye.data, saveBuffer);
