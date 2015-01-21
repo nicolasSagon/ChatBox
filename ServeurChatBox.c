@@ -3,10 +3,13 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "protocole.h"
+#include <stdlib.h>
+#include "ServeurChatBox.h"
 
 #define SERVER_PORT 1500
 #define MAX_MSG 80
