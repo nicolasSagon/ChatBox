@@ -1,8 +1,6 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#ifndef PROTOCOLE
+#define PROTOCOLE
+
 #define TAILLEDATA 140
 
 struct Header
@@ -56,3 +54,7 @@ struct Room {
 struct ListRoom {
 	struct Room *first;
 };
+
+
+
+#endif

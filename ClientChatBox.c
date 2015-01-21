@@ -1,7 +1,6 @@
 #ifndef CLIENTCHATBOX
 #define CLIENTCHATBOX
 
-#include "protocole.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -11,13 +10,17 @@
 #include <time.h>
 #include <pthread.h>
 #include <sys/types.h>
+
+#include "protocole.h"
+#include "ClientFunctions.h"
+
 #define SERVER_PORT 1500
 #define MAX_MSG 80
 
 int sd;
 struct sockaddr_in client_addr, serv_addr;
 
-int getCommande(char * str){
+int cmdStrToInt(char * str){
   if(strcmp(str, "CONNECT") == 0)
     return 0;
   else if(strcmp(str, "JOIN") == 0)
@@ -39,10 +42,9 @@ int getCommande(char * str){
   
 }
 
-void *timer(void *arg) {
-  int i;
+void *timer() {
   struct Chat_message messageEnvoye;
-  printf("Thread lancé\n");
+  //printf("Thread lancé\n");   //Debug
   for (;;)
   {
     usleep(15000000);
@@ -55,11 +57,11 @@ void *timer(void *arg) {
     messageEnvoye.header.numMessage=1; 
     if (sendto(sd, &messageEnvoye, sizeof(messageEnvoye) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)
     {
-      perror("sendto");
+      perror("sendto\n");
       pthread_exit((void*) 1);
     }
     else{
-      printf("Je vole!!\n");      
+      //printf("Je vole!!\n"); //Debug message Keep alive envoyé     
     }
   }
   pthread_exit(0);
@@ -72,14 +74,11 @@ int main (int argc, char *argv[])
   
   struct Chat_message messageEnvoye;
   
-  char * temp;
   char buffer[TAILLEDATA];
   char commande[20];
   char data[TAILLEDATA];
-  char *pch;
   
-  temp="test";
-  strcpy(messageEnvoye.data,temp);
+  strcpy(messageEnvoye.data,"");
   messageEnvoye.header.commande=CONNECT;
   messageEnvoye.header.idUtilisateur=1;
   messageEnvoye.header.timestamp=time(NULL);
@@ -104,7 +103,7 @@ int main (int argc, char *argv[])
   client_addr.sin_port        = htons(0);
   if (bind(sd,(struct sockaddr *)&client_addr, sizeof client_addr) == -1)
   {
-    perror("bind");
+    perror("bind\n");
     return 1;
   }
   // Fill server address structure
@@ -119,7 +118,7 @@ int main (int argc, char *argv[])
   
     if (sendto(sd, &messageEnvoye, sizeof(messageEnvoye) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)
     {
-      perror("sendto");
+      perror("sendto\n");
       return 1;
     } else {
       printf("Sent to %s\n", inet_ntoa(serv_addr.sin_addr) );
@@ -132,27 +131,31 @@ int main (int argc, char *argv[])
   }
   
   while(1){
+  //printf("debug: entree dans boucle while 1\n");
   
-  fgets(buffer, 140, stdin);
+  if(fgets(buffer, 140, stdin) != NULL){
+    //printf("debug: fgets ok\n");
+  }
+  else
+     perror("debug: Erreur fgets\n");
+
+  strcpy(commande, strtok(buffer," ")); //Extraction de la commande (Buffer jusqu'au premier espace)
+  messageEnvoye.header.commande=cmdStrToInt(commande); //Affectation de la var cmd au message
+  printf("Commande = %s\n", commande);
   
-  pch = strtok (buffer," ");
-  
-  strcpy(commande, pch);
-      
+  char *pch = strtok (NULL, " ,.-");
   while (pch != NULL)
   {
-    pch = strtok (NULL, " ,.-");
     if(pch != NULL){
      strcat(data, pch);
-     strcat(data, " "); 
+     strcat(data, " ");
     }
+    pch = strtok (NULL, " ,.-");
   }
-  
-  printf("Commande = %s\n", commande);
+
   printf("Data = %s\n", data);
- 
-  strcpy(messageEnvoye.data,data);
-  messageEnvoye.header.commande=getCommande(commande);
+  strcpy(messageEnvoye.data, data);
+  
   messageEnvoye.header.idUtilisateur=1;
   messageEnvoye.header.timestamp=time(NULL);
   messageEnvoye.header.idSalon=1;
@@ -160,7 +163,7 @@ int main (int argc, char *argv[])
   messageEnvoye.header.numMessage=2;
   if (sendto(sd, &messageEnvoye, sizeof(messageEnvoye) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)
     {
-      perror("sendto");
+      perror("sendto\n");
       return 1;
     } else {
       printf("Sent to %s\n", inet_ntoa(serv_addr.sin_addr) );
