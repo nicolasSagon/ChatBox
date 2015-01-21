@@ -84,11 +84,11 @@ void *msgServer(){
 struct Chat_message msgConnection(struct Chat_message messageEnvoye){
 	strcpy(messageEnvoye.data,"");
 	messageEnvoye.header.commande=CONNECT;
-	messageEnvoye.header.idUtilisateur=1;
+	messageEnvoye.header.idUtilisateur=0;
 	messageEnvoye.header.timestamp=time(NULL);
-	messageEnvoye.header.idSalon=1;
+	messageEnvoye.header.idSalon=0;
 	messageEnvoye.header.taille=sizeof(messageEnvoye.data);
-	messageEnvoye.header.numMessage=1;
+	messageEnvoye.header.numMessage=0;
 	return messageEnvoye;
 }
 
@@ -98,37 +98,15 @@ void sendMsg(struct sockaddr_in client_addr, struct Chat_message messageEnvoye){
 		perror("sendto\n");
 		return 1;
 	} else {
-		printf("Sent to %s\n", inet_ntoa(serv_addr.sin_addr) );
+// 		printf("Sent to %s\n", inet_ntoa(serv_addr.sin_addr) ); //Debug
 	}
 }
 
-int main (int argc, char *argv[]){
-	
-	pthread_t th_timer;
-	pthread_t th_msgServer;
-	
-	struct Chat_message messageEnvoye;
-	struct Chat_message messageRecu;
-	socklen_t addr_len;
-	
-	char buffer[TAILLEDATA];
-	char saveBuffer[TAILLEDATA];
-	char commande[20];
-	char data[TAILLEDATA];
-	char *mot;
-	int n;
-	
-	messageEnvoye = msgConnection(messageEnvoye);
-		
-	strcpy(data, "");
-	strcpy(commande, "");
-		
-	printf("%s: trying to send to %s\n", argv[0], argv[1]);
-	
+void init(char *ip){
 	// Create socket
 	if ((sd = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
 	{
-		perror(argv[0]);
+		perror("erreur ip: Creation de socket");
 		return 1;
 	}
 	// Bind socket
@@ -142,35 +120,62 @@ int main (int argc, char *argv[]){
 	}
 	// Fill server address structure
 	serv_addr.sin_family = AF_INET;
-	if (inet_aton(argv[1], &(serv_addr.sin_addr)) == 0)
+	if (inet_aton(ip, &(serv_addr.sin_addr)) == 0)
 	{
-		printf("Invalid IP address format <%s>\n", argv[1]);
+		printf("Invalid IP address format <%s>\n", ip);
 		return 1;
 	}
-	serv_addr.sin_port = htons(SERVER_PORT);
+	serv_addr.sin_port = htons(SERVER_PORT);	
+}
+
+int main (int argc, char *argv[]){
 	
-	// send all messages
+	pthread_t th_timer;
+	pthread_t th_msgServer;
+	
+	struct Chat_message messageEnvoye;
+	struct Chat_message messageRecu;
+	socklen_t addr_len;
+	
+	char buffer[TAILLEDATA];
+	char saveBuffer[TAILLEDATA];
+	char commande[20] = "";
+	char data[TAILLEDATA] = "";
+	char *mot;
+	int n,idUser;
+	
+	messageEnvoye = msgConnection(messageEnvoye);
+
+	printf("%s: trying to send to %s\n", argv[0], argv[1]);
+	
+	//Création, bind et Affectation du socket
+	init(argv[1]);
+	
+	// send connexion msg
 	sendMsg(client_addr,messageEnvoye);
-		
-	//Création du Thread Timer
-	if (pthread_create(&th_timer, NULL, timer, NULL) != 0){
-		perror("Erreur création du thread timer\n");
-		return 1;
-	}
-// 	Création du thread MessageServer
-	if (pthread_create(&th_msgServer, NULL, msgServer, NULL) != 0){
-		perror("Erreur création du thread MESSAGE_SERVER\n");
-		return 1;
-	}
-	
+
 	//Attente reception confirmation serveur
 	addr_len = sizeof(serv_addr);
 	n = recvfrom(sd, &messageRecu, MAX_MSG, 0,(struct sockaddr *)&serv_addr, &addr_len);
     if (n == -1)
 		perror("recvfrom");
 	else {
-		printf("received from %s: %d\n", inet_ntoa(serv_addr.sin_addr), messageRecu.header.commande);
+		printf("received from server@ %s\n", inet_ntoa(serv_addr.sin_addr), messageRecu.header.commande);
+		idUser = messageRecu.header.idUtilisateur;
+		printf("idUser = %i\n",idUser);
     }
+    
+    //Création du Thread Timer
+	if (pthread_create(&th_timer, NULL, timer, NULL) != 0){
+		perror("Erreur création du thread timer\n");
+		return 1;
+	}
+	
+// 	Création du thread MessageServer
+	if (pthread_create(&th_msgServer, NULL, msgServer, NULL) != 0){
+		perror("Erreur création du thread MESSAGE_SERVER\n");
+		return 1;
+	}
 	
 	while(1){
 	//printf("debug: entree dans boucle while 1\n");
@@ -194,29 +199,25 @@ int main (int argc, char *argv[]){
 		else{
 			messageEnvoye.header.commande=cmdStrToInt(commande); //Affectation de la var cmd au message
 			
-			mot = strtok (NULL, " ,.-");
+			mot = strtok (NULL, " ");
 			while (mot != NULL){ //Extraction de data
 				strcat(data, mot);
 				strcat(data, " ");
-				mot = strtok (NULL, " ,.-");
+				mot = strtok (NULL, " ");
 			}
 			strcpy(messageEnvoye.data, data);
 		}
 		
-		printf("Commande = %i\n", messageEnvoye.header.commande);
-		printf("Data = %s\n", messageEnvoye.data);
+// 		printf("Commande = %i\n", messageEnvoye.header.commande);  //Debug
+// 		printf("Data = %s\n", messageEnvoye.data);  //Debug
+		
 		messageEnvoye.header.idUtilisateur=1;
 		messageEnvoye.header.timestamp=time(NULL);
 		messageEnvoye.header.idSalon=1;
 		messageEnvoye.header.taille=sizeof(messageEnvoye.data);
 		messageEnvoye.header.numMessage=2;
 		
-		if (sendto(sd, &messageEnvoye, sizeof(messageEnvoye) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1){
-			perror("sendto\n");
-			return 1;
-		} else {
-			printf("Sent to %s\n", inet_ntoa(serv_addr.sin_addr) );
-		}
+		sendMsg(client_addr,messageEnvoye);
 
 	}
 	close(sd);
