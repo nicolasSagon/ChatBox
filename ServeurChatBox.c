@@ -363,7 +363,7 @@ int main(void)
     if (n == -1)
       perror("recvfrom");
     else {
-		printf("received from %s: %d\n", inet_ntoa(client_addr.sin_addr), messageRecu.header.commande);
+		printf("received from %s: %d  -  %s\n", inet_ntoa(client_addr.sin_addr), messageRecu.header.commande, messageRecu.data);
 		decripteHeader(messageRecu, client_addr);
     }
   }
