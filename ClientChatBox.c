@@ -81,6 +81,27 @@ void *msgServer(){
 	pthread_exit(0);
 }
 
+struct Chat_message msgConnection(struct Chat_message messageEnvoye){
+	strcpy(messageEnvoye.data,"");
+	messageEnvoye.header.commande=CONNECT;
+	messageEnvoye.header.idUtilisateur=1;
+	messageEnvoye.header.timestamp=time(NULL);
+	messageEnvoye.header.idSalon=1;
+	messageEnvoye.header.taille=sizeof(messageEnvoye.data);
+	messageEnvoye.header.numMessage=1;
+	return messageEnvoye;
+}
+
+void sendMsg(struct sockaddr_in client_addr, struct Chat_message messageEnvoye){
+// send all messages
+	if (sendto(sd, &messageEnvoye, sizeof(messageEnvoye) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1){
+		perror("sendto\n");
+		return 1;
+	} else {
+		printf("Sent to %s\n", inet_ntoa(serv_addr.sin_addr) );
+	}
+}
+
 int main (int argc, char *argv[]){
 	
 	pthread_t th_timer;
@@ -97,14 +118,8 @@ int main (int argc, char *argv[]){
 	char *mot;
 	int n;
 	
-	strcpy(messageEnvoye.data,"");
-	messageEnvoye.header.commande=CONNECT;
-	messageEnvoye.header.idUtilisateur=1;
-	messageEnvoye.header.timestamp=time(NULL);
-	messageEnvoye.header.idSalon=1;
-	messageEnvoye.header.taille=sizeof(messageEnvoye.data);
-	messageEnvoye.header.numMessage=1; 
-	
+	messageEnvoye = msgConnection(messageEnvoye);
+		
 	strcpy(data, "");
 	strcpy(commande, "");
 		
@@ -135,12 +150,7 @@ int main (int argc, char *argv[]){
 	serv_addr.sin_port = htons(SERVER_PORT);
 	
 	// send all messages
-	if (sendto(sd, &messageEnvoye, sizeof(messageEnvoye) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1){
-		perror("sendto\n");
-		return 1;
-	} else {
-		printf("Sent to %s\n", inet_ntoa(serv_addr.sin_addr) );
-	}
+	sendMsg(client_addr,messageEnvoye);
 		
 	//Création du Thread Timer
 	if (pthread_create(&th_timer, NULL, timer, NULL) != 0){
