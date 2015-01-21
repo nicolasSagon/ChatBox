@@ -81,8 +81,8 @@ void *msgServer(){
 	pthread_exit(0);
 }
 
-int main (int argc, char *argv[]){
-	
+int main (int argc, char *argv[])
+{
 	pthread_t th_timer;
 	pthread_t th_msgServer;
 	

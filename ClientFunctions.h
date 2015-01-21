@@ -1,6 +1,8 @@
-#ifndef CLIENTFUNCTIONS.H
-#define CLIENTFUNCTIONS.H
+#ifndef ClientFunctionsh
+#define ClientFunctionsh
 
-char * getData(char * );
+int cmdStrToInt(char * str);
+void *timer();
+void *msgServer();
 
 #endif
