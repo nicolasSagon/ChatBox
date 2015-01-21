@@ -177,7 +177,7 @@ int main (int argc, char *argv[]){
 	}
 	
 	while(1){
-	//printf("debug: entree dans boucle while 1\n");
+	//printf("debug: entree dan<<<<<<< HEADs boucle while 1\n");
 	
 		if(fgets(buffer, 140, stdin) != NULL){
 			//printf("debug: fgets ok\n");
