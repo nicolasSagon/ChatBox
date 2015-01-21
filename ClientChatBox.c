@@ -101,33 +101,7 @@ void sendMsg(struct sockaddr_in client_addr, struct Chat_message messageEnvoye){
 	}
 }
 
-<<<<<<< HEAD
 void init(char *ip){
-=======
-int main (int argc, char *argv[]){
-
-	pthread_t th_timer;
-	pthread_t th_msgServer;
-	
-	struct Chat_message messageEnvoye;
-	struct Chat_message messageRecu;
-	socklen_t addr_len;
-	
-	char buffer[TAILLEDATA];
-	char saveBuffer[TAILLEDATA];
-	char commande[20];
-	char data[TAILLEDATA];
-	char *mot;
-	int n;
-	
-	messageEnvoye = msgConnection(messageEnvoye);
-		
-	strcpy(data, "");
-	strcpy(commande, "");
-		
-	printf("%s: trying to send to %s\n", argv[0], argv[1]);
-	
->>>>>>> 53ccec5e64e275cbc50ca2fc38d2954475746ae5
 	// Create socket
 	if ((sd = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
 	{
