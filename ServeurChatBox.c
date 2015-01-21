@@ -13,9 +13,11 @@
 #define MAX_USER 50
 
 struct ListUser *listUser;
+struct ListRoom *listRoom;
 int id=1;
 int idRoom=1;
 int sd;
+int maxUserSalon=10;
 
 struct ListUser *initalization(){
 	struct ListUser *listUser= malloc(sizeof(*listUser));
@@ -80,7 +82,7 @@ void displayList(){
 	}
 }
 
-struct ListRoom *listRoom;
+
 struct ListRoom *initalizationRoom(){
 	struct ListRoom *listRoom= malloc(sizeof(*listRoom));
 	struct Room *room= malloc(sizeof(*room));
@@ -92,14 +94,15 @@ struct ListRoom *initalizationRoom(){
 	return listRoom;
 }
 
-struct Room addRoom(char* name){
+struct Room* addRoom(char* name){
 	struct Room *room= malloc(sizeof(*room));
 	room->id=idRoom;
 	strcpy(room->name,name);
 	room->roomNext=listRoom->first;
 	listRoom->first=room;
+	
 	idRoom++;
-	return *room;
+	return room;
 }
 
 void deleteRoom(int id){
@@ -134,6 +137,7 @@ void deleteRoom(int id){
 void displayListRoom(){
 	struct Room *room=listRoom->first;
 	while (room->roomNext != NULL ){
+		//printf("room name : %s id %d persone %d\n", room->name, room->id, room->idUser[0]);
 		printf("room name : %s id %d\n", room->name, room->id);
 		room=room->roomNext;
 	}
@@ -235,33 +239,39 @@ void disconnectServer(struct Header header){
 
 void say(struct Chat_message messageRecu){
 
-	
 }
 
 void join(struct Chat_message messageRecu){
 	//recherche si le salon recut est existe sinon on le crée
 	printf("join to :%s\n", messageRecu.data);
 	struct Room *room=listRoom->first;
-	int find=0,findUser=0, idVid=99;
-	struct Room newRoom;
+	int find=0,findUser=0, idVid=0;
+	struct Room *newRoom;
 	if (room->roomNext != NULL){
 		while (room->roomNext != NULL && find==0){
-			printf("boucle while\n");
+			//printf("boucle while\n");
 			if (strcmp (room->name, messageRecu.data) == 0){
 				findUser=1;
-				printf("salon deja crée\n");
+				//printf("salon deja crée\n");
 				//recherche si l'utilisateur est deja dans le salon
 				int i;
-				for (i=0;i<10;i++){
+				for (i=0;i<maxUserSalon;i++){
 					if(room->idUser[i]==messageRecu.header.idUtilisateur){
 						findUser=1;
 						printf("Ajout de l'utilisateur au salon %s imposible\n",messageRecu.data);
 					}
-					if(room->idUser[i]==NULL){
+					if(room->idUser[i]!=NULL){
+						//printf("id a remplir\n");
 						idVid=i;
+					}else
+					{
+						
+						idVid=99;
 					}
 				}
+				//printf("id %d",idVid);
 				if (findUser==0 && idVid != 99){
+					//printf("id %d\n",idVid);
 					//ajout de l'utilisateur dans le salon
 					room->idUser[idVid]=messageRecu.header.idUtilisateur;
 				}
@@ -272,23 +282,39 @@ void join(struct Chat_message messageRecu){
 			}
 		}
 		if (find==0){
-			printf("salon non crée\n");
 			newRoom=addRoom(messageRecu.data);
-			newRoom.idUser[0]=messageRecu.header.idUtilisateur;
+			//printf("id utilisateur %d\n",messageRecu.header.idUtilisateur);
+			newRoom->idUser[0]=messageRecu.header.idUtilisateur;
 			find=1;
 		}
 	}
 	else{
-		printf("salon non crée\n");
 		newRoom=addRoom(messageRecu.data);
-		newRoom.idUser[0]=messageRecu.header.idUtilisateur;
+		newRoom->idUser[0]=messageRecu.header.idUtilisateur;
+		//printf("Valeur idUser dans room %d\n", newRoom->idUser[0]);
 	}
 	displayListRoom();
-
 }
 
 void leave(struct Header header ){
-
+	struct Room *room=listRoom->first;
+	int find=0,findUser=0,i,nbUser=0;
+	while (room->roomNext != NULL && find==0){
+		if (room->id == header.idSalon){
+			find=1;
+			for (i=0;i<maxUserSalon;i++){
+				if(room->idUser[i]==header.idUtilisateur){
+					printf("trouver utilisateur dans salon dans %d\n", i);
+					room->idUser[i]=NULL;
+					findUser=1;
+				}
+			}
+		}
+		else {
+			room=room->roomNext;
+		}
+	}
+	displayListRoom();
 }
 
 void alive(struct Header header){
@@ -296,6 +322,9 @@ void alive(struct Header header){
 }
 
 void ack(struct Chat_message messageRecu){
+
+}
+void sendAck(char* data){
 
 }
 
@@ -335,8 +364,7 @@ int main(void)
 		decripteHeader(messageRecu, client_addr);
     }
   }
-  return 0;
-  
+  return 0;  
 }
 
 #endif
