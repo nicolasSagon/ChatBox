@@ -30,7 +30,7 @@ int cmdStrToInt(char * str){
 		return 2;
 	else if(strstr(str, "LEAVE") != NULL)
 		return 3;
-	else if(strstr(str, "DISCONNECT") != NULL)
+	else if(strstr(str, "DISCONECT") != NULL)
 		return 4;
 	else if(strstr(str, "ACK") != NULL)
 		return 5;

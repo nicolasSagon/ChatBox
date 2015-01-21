@@ -236,9 +236,26 @@ void sendMessage(struct sockaddr_in client_addr, struct Chat_message messageEnvo
 
 void disconnectServer(struct Header header){
 	printf("delete id %d\n", header.idUtilisateur);
-	deleteUser(header.idUtilisateur);
+	
 	
 	displayList();
+	
+	struct Room *room=listRoom->first;
+	struct Chat_message messageEnvoye;
+	int i;
+	if (room->roomNext != NULL){
+		while (room->roomNext != NULL){
+			printf("Room %s\n",room->name);
+			for (i=0;i<maxUserSalon;i++){
+				if(room->idUser[i]==header.idUtilisateur){
+					printf("Room id user%d\n",room->idUser[i]);
+					room->idUser[i]=0;
+				}
+			}
+			room=room->roomNext;
+		}
+	}
+	deleteUser(header.idUtilisateur);	
 }
 struct User* findUser(int id){
 	struct User *user=listUser->first;
@@ -366,7 +383,7 @@ void ackJoin (int idRoom, int idUser,int etat){
 }
 void leave(struct Header header ){
 	struct Room *room=listRoom->first;
-	int find=0,findUser=0,i,nbUser=0;
+	int find=0,findUser=0,i;
 	while (room->roomNext != NULL && find==0){
 		if (room->id == header.idSalon){
 			find=1;

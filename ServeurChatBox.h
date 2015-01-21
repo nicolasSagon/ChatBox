@@ -10,10 +10,12 @@ void decripteHeader(struct Chat_message messageRecu,struct sockaddr_in client_ad
 void connectServer(struct sockaddr_in client_addr, char* userName);
 void sendMessage(struct sockaddr_in client_addr, struct Chat_message messageEnvoye);
 void disconnectServer(struct Header header);
+struct User* findUser(int id);
 void say(struct Chat_message messageRecu);
 void join(struct Chat_message messageRecu);
+void ackJoin (int idRoom, int idUser,int etat);
 void leave(struct Header header);
 void alive(struct Header header);
 void ack(struct Chat_message messageRecu);
-void sendAck(char* data);
+
 int main(void);
