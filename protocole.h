@@ -36,8 +36,10 @@ struct User {
 
 	int id;
 	char name[50];
-	int sd;
 	struct User *userNext;
+	short unsigned int port;
+	char ipAdress[20];
+	struct sockaddr_in client_addr;
 };
 
 struct ListUser {

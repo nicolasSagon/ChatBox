@@ -6,35 +6,41 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
 #include "protocole.h"
 
 #define SERVER_PORT 1500
 #define MAX_MSG 80
+#define MAX_USER 50
 
 struct ListUser *listUser;
 int id=1;
 int idRoom=1;
+int sd;
+
 struct ListUser *initalization(){
 	struct ListUser *listUser= malloc(sizeof(*listUser));
 	struct User *user= malloc(sizeof(*user));
 	user->id=0;
 	strcpy(user->name,"");
 	user->userNext=NULL;
-	user->sd=0;
+	user->port = 0;
+	strcpy(user->ipAdress,"");
 	
 	listUser->first=user;
 	return listUser;
 }
 
-void addUser(int sd, char* name){
+struct User *addUser(struct sockaddr_in client_addr, char* name){
 	struct User *user= malloc(sizeof(*user));
 	user->id=id;
 	strcpy(user->name,name);
-	user->sd=sd;
+	user->port = ntohs(client_addr.sin_port);
+	strcpy(user->ipAdress, inet_ntoa(client_addr.sin_addr));
+	user->client_addr = client_addr;
 	user->userNext=listUser->first;
 	listUser->first=user;
 	id++;
+	return user;
 }
 
 void deleteUser(int id){
@@ -69,7 +75,7 @@ void deleteUser(int id){
 void displayList(){
 	struct User *user=listUser->first;
 	while (user->userNext != NULL ){
-		printf("User name : %s id %d\n", user->name, user->id);
+		printf("User name : %s id %d, adress = %s, port = %d \n", user->name, user->id, user->ipAdress, user->port);
 		user=user->userNext;
 	}
 }
@@ -133,11 +139,12 @@ void displayListRoom(){
 	}
 }
 
-void decripteHeader(struct Chat_message messageRecu,int sd){
+void decripteHeader(struct Chat_message messageRecu,struct sockaddr_in client_addr){
 	switch  (messageRecu.header.commande){
 	
 	case CONNECT:
-		connectServer(sd,messageRecu.data);
+		connectServer(client_addr,messageRecu.data);
+
 	break;
 	
 	case JOIN:
@@ -167,23 +174,56 @@ void decripteHeader(struct Chat_message messageRecu,int sd){
 	}
 }
 
-void connectServer(int sd, char* userName){
+void connectServer(struct sockaddr_in client_addr, char* userName){
 	struct User *user=listUser->first;
-	struct User *userTmp;
 	int find=0;
+	struct Chat_message messageEnvoye;
+
 	while (user->userNext != NULL && find==0){
-		if (user->sd==sd){
+		if (user->port==ntohs(client_addr.sin_port) && strcmp(user->ipAdress, inet_ntoa(client_addr.sin_addr)) == 0){
 			find=1;
 		}
 		else {
-			userTmp=user;
 			user=user->userNext;
 		}
 	}
 	if (find==0){
-		addUser(sd,userName);
+		user = addUser(client_addr,userName);
 		displayList();
+
+		strcpy(messageEnvoye.data, "1");
+		messageEnvoye.header.commande = ACK;
+		messageEnvoye.header.idUtilisateur=user->id;
+		messageEnvoye.header.timestamp=time(NULL);
+		messageEnvoye.header.idSalon=0;
+		messageEnvoye.header.taille=sizeof(messageEnvoye.data);
+		messageEnvoye.header.numMessage=0;
+
+		sendMessage(user->client_addr, messageEnvoye);
+
+	}
+
+	else{
+		strcpy(messageEnvoye.data, "0");
+		messageEnvoye.header.commande = ACK;
+		messageEnvoye.header.idUtilisateur=user->id;
+		messageEnvoye.header.timestamp=time(NULL);
+		messageEnvoye.header.idSalon=0;
+		messageEnvoye.header.taille=sizeof(messageEnvoye.data);
+		messageEnvoye.header.numMessage=0;
+		sendMessage(user->client_addr, messageEnvoye);
 	}	
+}
+
+void sendMessage(struct sockaddr_in client_addr, struct Chat_message messageEnvoye){
+
+	if (sendto(sd, &messageEnvoye, sizeof(messageEnvoye) + 1, 0,(struct sockaddr *)&client_addr, sizeof(client_addr)) == -1)
+	{
+		perror("sendto\n");
+		return 1;
+	} else {
+		printf("SERV SEND to %s\n", inet_ntoa(client_addr.sin_addr) );
+	}
 }
 
 void disconnectServer(struct Header header){
@@ -264,7 +304,7 @@ int main(void)
 
   listUser = initalization();
   listRoom =initalizationRoom();
-  int sd, n;
+  int n;
   socklen_t addr_len;
   struct sockaddr_in client_addr, server_addr;
   struct Chat_message messageRecu;
@@ -291,13 +331,11 @@ int main(void)
     if (n == -1)
       perror("recvfrom");
     else {
-      printf("received from %s: %d\n",
-          inet_ntoa(client_addr.sin_addr), messageRecu.header.commande);
-      decripteHeader(messageRecu, sd);
+		printf("received from %s: %d\n", inet_ntoa(client_addr.sin_addr), messageRecu.header.commande);
+		decripteHeader(messageRecu, client_addr);
     }
   }
   return 0;
-
   
 }
 
