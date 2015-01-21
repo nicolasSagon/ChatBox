@@ -48,6 +48,7 @@ struct Room {
 	int id;
 	char name[50];
 	int  idUser[10];
+	int numMsg;
 	struct Room *roomNext;
 };
 
