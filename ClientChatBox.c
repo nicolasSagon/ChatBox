@@ -87,7 +87,7 @@ void *msgServer(){
 				if(ackNeeded == 1){
 						ackNeeded = -1;
 						printf("ID salon = %s\n", msgServer.data);
-						salonId = atoi(msgServer.data);
+						salonId = msgServer.header.idSalon;
 						pthread_mutex_unlock(&mutexAck);
 				}
 			}
