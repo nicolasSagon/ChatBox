@@ -9,7 +9,7 @@ void displayListRoom();
 void decripteHeader(struct Chat_message messageRecu,struct sockaddr_in client_addr);
 void connectServer(struct sockaddr_in client_addr, char* userName);
 void sendMessage(struct sockaddr_in client_addr, struct Chat_message messageEnvoye);
-void disconnectServer(struct Header header);
+void disconnectServer(int idUtilisateur);
 struct User* findUser(int id);
 void say(struct Chat_message messageRecu);
 void join(struct Chat_message messageRecu);
@@ -17,5 +17,4 @@ void ackJoin (int idRoom, int idUser,int etat);
 void leave(struct Header header);
 void alive(struct Header header);
 void ack(struct Chat_message messageRecu);
-
 int main(void);

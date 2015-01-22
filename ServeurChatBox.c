@@ -171,7 +171,7 @@ void decripteHeader(struct Chat_message messageRecu,struct sockaddr_in client_ad
 	break;
 	
 	case DISCONNECT:
-		disconnectServer(messageRecu.header);
+		disconnectServer(messageRecu.header.idUtilisateur);
 	break;
 	
 	case ACK:
@@ -237,19 +237,19 @@ void sendMessage(struct sockaddr_in client_addr, struct Chat_message messageEnvo
 	}
 }
 
-void disconnectServer(struct Header header){
-	printf("delete id %d\n", header.idUtilisateur);
+void disconnectServer(int idUtilisateur){
+	//printf("delete id %d\n", header.idUtilisateur);
 	struct Room *room=listRoom->first;
 	struct Chat_message messageEnvoye;
 	struct User *userMsgEnvoie;
 	struct User *userMsgEnvoieVerif;
 	int i;
-	if(header.idUtilisateur!=0){
+	if(idUtilisateur!=0){
 	  if (room->roomNext != NULL){
 		  while (room->roomNext != NULL){
 			  printf("Room %s\n",room->name);
 			  for (i=0;i<maxUserSalon;i++){
-				  if(room->idUser[i]==header.idUtilisateur){
+				  if(room->idUser[i]==idUtilisateur){
 					  printf("Room id user%d\n",room->idUser[i]);
 					  room->idUser[i]=0;
 				  }
@@ -258,22 +258,23 @@ void disconnectServer(struct Header header){
 		  }
 	  }
       
-	  userMsgEnvoie=findUser(header.idUtilisateur);
+	  userMsgEnvoie=findUser(idUtilisateur);
 	  if(userMsgEnvoie != NULL){ 	
-	    deleteUser(header.idUtilisateur);
+	    deleteUser(idUtilisateur);
 	  }
 	  else{ 	
-	    ackDisconnect(header.idUtilisateur,userMsgEnvoie->client_addr,"0");
+	    ackDisconnect(idUtilisateur,userMsgEnvoie->client_addr,"0");
 	  }
 	  
-	  userMsgEnvoieVerif=findUser(header.idUtilisateur);
+	  userMsgEnvoieVerif=findUser(idUtilisateur);
 	  if(userMsgEnvoieVerif == NULL){ 	
-	    ackDisconnect(header.idUtilisateur,userMsgEnvoie->client_addr,"1");
+	    ackDisconnect(idUtilisateur,userMsgEnvoie->client_addr,"1");
 	  }
 	  else{ 	
-	    ackDisconnect(header.idUtilisateur,userMsgEnvoie->client_addr,"0");
+	    ackDisconnect(idUtilisateur,userMsgEnvoie->client_addr,"0");
 	  }
 	}
+	printf("Disconnect");
 }
 void ackDisconnect (int idUser,struct sockaddr_in client_addr,int etat){
   	struct Chat_message messageEnvoye;
@@ -456,16 +457,14 @@ void *verifAlive() {
 			struct User *user=listUser->first;
 			usleep(5000000);
 			if (user->id !=0 ){
-				while (user->userNext != NULL ){
+				while (user->userNext != NULL && user->timeLastActivity!=NULL ){
 					printf("User \n");
 					int disconnect=0;
-					/*disconnect=user->timeLastActivity+2;
-					
+					disconnect=user->timeLastActivity+120;
 					if (disconnect<= time(NULL)){
 					 	//appel disconnect
-					 
-					}*/
-					
+					 	disconnectServer(user->id);
+					}	
 					user=user->userNext;
 				}
 			}else{
