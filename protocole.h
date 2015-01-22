@@ -11,6 +11,7 @@ struct Header
 	char idSalon;
 	int taille;
 	int numMessage;
+	int lastCommandeId;
 };
 
 struct Chat_message
