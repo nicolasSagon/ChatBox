@@ -21,6 +21,7 @@ int sd,idUser, salonId;
 struct sockaddr_in client_addr, serv_addr;
 pthread_mutex_t mutexAck;
 int ackNeeded;
+char name[25];
 
 int cmdStrToInt(char * str){
 	//printf("%s\n",str);
@@ -118,9 +119,11 @@ void *msgServer(){
 						pthread_exit((void*) 1);
 					}
 			}
-			else if(msgServer.header.commande == 2)
+			if(msgServer.header.commande == 7)
 			{
-				printf("%s\n", inet_ntoa(serv_addr.sin_addr), msgServer.data);
+				printf("\33[2K\r%s",msgServer.data);
+				printf("%s : ", name);
+				fflush(stdout);
 			}
 				//;
 			
@@ -129,13 +132,18 @@ void *msgServer(){
 	pthread_exit(0);
 }
 
-	struct Chat_message msgConnection(struct Chat_message messageEnvoye){
-	strcpy(messageEnvoye.data,"test");
+struct Chat_message msgConnection(struct Chat_message messageEnvoye){
+	printf("Entrez votre nom d'utilisateur : \n");
+	if(fgets(name, 25, stdin) != NULL){
+			name[strlen(name)-1] = '\0';
+			strcpy(messageEnvoye.data, name);
+	}
 	messageEnvoye.header.commande=CONNECT;
 	messageEnvoye.header.lastCommandeId = -1;
 	messageEnvoye.header.idUtilisateur=0;
 	messageEnvoye.header.timestamp=time(NULL);
 	messageEnvoye.header.idSalon=0;
+	
 	messageEnvoye.header.taille=sizeof(messageEnvoye.data);
 	messageEnvoye.header.numMessage=0;
 	return messageEnvoye;
@@ -244,7 +252,7 @@ int main (int argc, char *argv[]){
 	ackNeeded = -1;
 	while(1){
 	//printf("debug: entree dans boucle while 1\n");
-		
+		printf("%s : ", name);
 		if(fgets(buffer, 140, stdin) != NULL){
 			//printf("debug: fgets ok\n");
 			strcpy(saveBuffer, buffer);
@@ -289,9 +297,7 @@ int main (int argc, char *argv[]){
 				exit(0);
 		
 		ackNeeded = messageEnvoye.header.commande;
-		printf("ackNeeded = %d\n", ackNeeded);
 		pthread_mutex_lock(&mutexAck);
-		printf("Débloqué\n");
 		ackNeeded = -1;
 		
 	}

@@ -207,6 +207,7 @@ void connectServer(struct sockaddr_in client_addr, char* userName){
 		messageEnvoye.header.idUtilisateur=user->id;
 		messageEnvoye.header.timestamp=time(NULL);
 		messageEnvoye.header.idSalon=0;
+		messageEnvoye.header.lastCommandeId = ACK;
 		messageEnvoye.header.taille=sizeof(messageEnvoye.data);
 		messageEnvoye.header.numMessage=0;
 
@@ -220,6 +221,7 @@ void connectServer(struct sockaddr_in client_addr, char* userName){
 		messageEnvoye.header.idUtilisateur=user->id;
 		messageEnvoye.header.timestamp=time(NULL);
 		messageEnvoye.header.idSalon=0;
+		messageEnvoye.header.lastCommandeId = ACK;
 		messageEnvoye.header.taille=sizeof(messageEnvoye.data);
 		messageEnvoye.header.numMessage=0;
 		sendMessage(user->client_addr, messageEnvoye);
@@ -305,7 +307,25 @@ void say(struct Chat_message messageRecu){
 	//parcourt de la liste pour savoir a qui envoyer le message
 	struct Room *room=listRoom->first;
 	struct Chat_message messageEnvoye;
+	struct Chat_message messageAck;
+	
+	struct User *userMsgAck;
+	
 	int i,find=0;
+	
+	userMsgAck=findUser(messageRecu.header.idUtilisateur);
+	
+	strcpy(messageAck.data,"1");
+	messageAck.header.commande=ACK;
+	messageAck.header.idUtilisateur=messageRecu.header.idUtilisateur;
+	messageAck.header.timestamp=time(NULL);
+	messageAck.header.lastCommandeId = SAY;
+	messageAck.header.idSalon=messageRecu.header.idSalon;
+	messageAck.header.taille=sizeof(messageAck.data);
+	messageAck.header.numMessage=room->numMsg;
+	
+	sendMessage(userMsgAck->client_addr, messageAck);
+	
 	if (room->roomNext != NULL){
 		while (room->roomNext != NULL && find==0){
 			if (room->id==messageRecu.header.idSalon){
@@ -318,6 +338,7 @@ void say(struct Chat_message messageRecu){
 				messageEnvoye.header.commande=MESSAGE_SERVER;
 				messageEnvoye.header.idUtilisateur=NULL;
 				messageEnvoye.header.timestamp=time(NULL);
+				messageEnvoye.header.lastCommandeId = -1;
 				messageEnvoye.header.idSalon=messageRecu.header.idSalon;
 				messageEnvoye.header.taille=sizeof(messageEnvoye.data);
 				messageEnvoye.header.numMessage=room->numMsg;
@@ -368,10 +389,10 @@ void join(struct Chat_message messageRecu){
 					printf("id %d\n",idVid);
 					//ajout de l'utilisateur dans le salon
 					room->idUser[idVid]=messageRecu.header.idUtilisateur;
-					ackSalon(room->id,messageRecu.header.idUtilisateur,"1");
+					ackSalon(room->id,messageRecu.header.idUtilisateur,"1",0);
 				}
 				else{
-					ackSalon("0",messageRecu.header.idUtilisateur,"0");
+					ackSalon("0",messageRecu.header.idUtilisateur,"0",0);
 				}
 				find=1;
 			}
@@ -383,19 +404,19 @@ void join(struct Chat_message messageRecu){
 			newRoom=addRoom(messageRecu.data);
 			//printf("id utilisateur %d\n",messageRecu.header.idUtilisateur);
 			newRoom->idUser[0]=messageRecu.header.idUtilisateur;
-			ackSalon(newRoom->id,messageRecu.header.idUtilisateur,"1");
+			ackSalon(newRoom->id,messageRecu.header.idUtilisateur,"1", 0);
 			find=1;
 		}
 	}
 	else{
 		newRoom=addRoom(messageRecu.data);
 		newRoom->idUser[0]=messageRecu.header.idUtilisateur;
-		ackSalon(newRoom->id,messageRecu.header.idUtilisateur,"1");
+		ackSalon(newRoom->id,messageRecu.header.idUtilisateur,"1", 0);
 		//printf("Valeur idUser dans room %d\n", newRoom->idUser[0]);
 	}
 	displayListRoom();
 }
-void ackSalon (int idRoom, int idUser,int etat){
+void ackSalon (int idRoom, int idUser,int etat, int mode){
 	struct User *userMsgEnvoie;
 	struct Chat_message messageEnvoye;
 	userMsgEnvoie=findUser(idUser);
@@ -403,6 +424,10 @@ void ackSalon (int idRoom, int idUser,int etat){
 	messageEnvoye.header.commande = ACK;
 	messageEnvoye.header.idUtilisateur=idUser;
 	messageEnvoye.header.timestamp=time(NULL);
+	if(mode == 0)
+		messageEnvoye.header.lastCommandeId = JOIN;
+	else
+		messageEnvoye.header.lastCommandeId = LEAVE;
 	messageEnvoye.header.idSalon=idRoom;
 	messageEnvoye.header.taille=sizeof(messageEnvoye.data);
 	messageEnvoye.header.numMessage=0;
@@ -428,10 +453,10 @@ void leave(struct Header header ){
 		}
 	}
 	if (findUser==1){
-	  ackSalon(room->id,header.idUtilisateur,"1");
+	  ackSalon(room->id,header.idUtilisateur,"1", 1);
 	}
 	else
-	  ackSalon(room->id,header.idUtilisateur,"0");
+	  ackSalon(room->id,header.idUtilisateur,"0", 1);
 	displayListRoom();
 }
 
