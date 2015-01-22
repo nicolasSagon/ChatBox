@@ -264,17 +264,7 @@ void disconnectServer(int idUtilisateur){
 	  if(userMsgEnvoie != NULL){ 	
 	    deleteUser(idUtilisateur);
 	  }
-	  else{ 	
-	    ackDisconnect(idUtilisateur,userMsgEnvoie->client_addr,"0");
-	  }
 	  
-	  userMsgEnvoieVerif=findUser(idUtilisateur);
-	  if(userMsgEnvoieVerif == NULL){ 	
-	    ackDisconnect(idUtilisateur,userMsgEnvoie->client_addr,"1");
-	  }
-	  else{ 	
-	    ackDisconnect(idUtilisateur,userMsgEnvoie->client_addr,"0");
-	  }
 	}
 	printf("Disconnect");
 }
