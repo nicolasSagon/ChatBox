@@ -26,7 +26,7 @@ enum Commande {
 	JOIN = 1,
 	SAY = 2,
 	LEAVE = 3,
-	DISCONECT = 4,
+	DISCONNECT = 4,
 	ACK = 5,
 	ALIVE = 6,
 	MESSAGE_SERVER = 7

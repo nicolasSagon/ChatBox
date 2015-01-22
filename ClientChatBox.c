@@ -22,16 +22,16 @@ struct sockaddr_in client_addr, serv_addr;
 
 int cmdStrToInt(char * str){
 	printf("%s\n",str);
-	if(strstr(str, "CONNECT") != NULL)
-		return 0;
+	if(strstr(str, "DISCONNECT") != NULL)
+		return 4;
 	else if(strstr(str, "JOIN") != NULL)
 		return 1;
 	else if(strstr(str, "SAY") != NULL)
 		return 2;
 	else if(strstr(str, "LEAVE") != NULL)
 		return 3;
-	else if(strstr(str, "DISCONECT") != NULL)
-		return 4;
+	else if(strstr(str, "CONNECT") != NULL)
+		return 0;
 	else if(strstr(str, "ACK") != NULL)
 		return 5;
 	else if(strstr(str, "ALIVE") != NULL)

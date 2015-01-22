@@ -167,7 +167,7 @@ void decripteHeader(struct Chat_message messageRecu,struct sockaddr_in client_ad
 		leave(messageRecu.header);
 	break;
 	
-	case DISCONECT:
+	case DISCONNECT:
 		disconnectServer(messageRecu.header);
 	break;
 	
