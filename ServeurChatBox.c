@@ -236,26 +236,52 @@ void sendMessage(struct sockaddr_in client_addr, struct Chat_message messageEnvo
 
 void disconnectServer(struct Header header){
 	printf("delete id %d\n", header.idUtilisateur);
-	
-	
-	displayList();
-	
 	struct Room *room=listRoom->first;
 	struct Chat_message messageEnvoye;
+	struct User *userMsgEnvoie;
+	struct User *userMsgEnvoieVerif;
 	int i;
-	if (room->roomNext != NULL){
-		while (room->roomNext != NULL){
-			printf("Room %s\n",room->name);
-			for (i=0;i<maxUserSalon;i++){
-				if(room->idUser[i]==header.idUtilisateur){
-					printf("Room id user%d\n",room->idUser[i]);
-					room->idUser[i]=0;
-				}
-			}
-			room=room->roomNext;
-		}
+	if(header.idUtilisateur!=0){
+	  if (room->roomNext != NULL){
+		  while (room->roomNext != NULL){
+			  printf("Room %s\n",room->name);
+			  for (i=0;i<maxUserSalon;i++){
+				  if(room->idUser[i]==header.idUtilisateur){
+					  printf("Room id user%d\n",room->idUser[i]);
+					  room->idUser[i]=0;
+				  }
+			  }
+			  room=room->roomNext;
+		  }
+	  }
+      
+	  userMsgEnvoie=findUser(header.idUtilisateur);
+	  if(userMsgEnvoie != NULL){ 	
+	    deleteUser(header.idUtilisateur);
+	  }
+	  else{ 	
+	    ackDisconnect(header.idUtilisateur,userMsgEnvoie->client_addr,"0");
+	  }
+	  
+	  userMsgEnvoieVerif=findUser(header.idUtilisateur);
+	  if(userMsgEnvoieVerif == NULL){ 	
+	    ackDisconnect(header.idUtilisateur,userMsgEnvoie->client_addr,"1");
+	  }
+	  else{ 	
+	    ackDisconnect(header.idUtilisateur,userMsgEnvoie->client_addr,"0");
+	  }
 	}
-	deleteUser(header.idUtilisateur);	
+}
+void ackDisconnect (int idUser,struct sockaddr_in client_addr,int etat){
+  	struct Chat_message messageEnvoye;
+	strcpy(messageEnvoye.data, etat);
+	messageEnvoye.header.commande = ACK;
+	messageEnvoye.header.idUtilisateur=idUser;
+	messageEnvoye.header.timestamp=time(NULL);
+	messageEnvoye.header.idSalon=idRoom;
+	messageEnvoye.header.taille=sizeof(messageEnvoye.data);
+	messageEnvoye.header.numMessage=0;
+	sendMessage(client_addr, messageEnvoye);
 }
 struct User* findUser(int id){
 	struct User *user=listUser->first;
@@ -340,10 +366,10 @@ void join(struct Chat_message messageRecu){
 					printf("id %d\n",idVid);
 					//ajout de l'utilisateur dans le salon
 					room->idUser[idVid]=messageRecu.header.idUtilisateur;
-					ackJoin(room->id,messageRecu.header.idUtilisateur,"1");
+					ackSalon(room->id,messageRecu.header.idUtilisateur,"1");
 				}
 				else{
-					ackJoin("0",messageRecu.header.idUtilisateur,"0");
+					ackSalon("0",messageRecu.header.idUtilisateur,"0");
 				}
 				find=1;
 			}
@@ -355,19 +381,19 @@ void join(struct Chat_message messageRecu){
 			newRoom=addRoom(messageRecu.data);
 			//printf("id utilisateur %d\n",messageRecu.header.idUtilisateur);
 			newRoom->idUser[0]=messageRecu.header.idUtilisateur;
-			ackJoin(newRoom->id,messageRecu.header.idUtilisateur,"1");
+			ackSalon(newRoom->id,messageRecu.header.idUtilisateur,"1");
 			find=1;
 		}
 	}
 	else{
 		newRoom=addRoom(messageRecu.data);
 		newRoom->idUser[0]=messageRecu.header.idUtilisateur;
-		ackJoin(newRoom->id,messageRecu.header.idUtilisateur,"1");
+		ackSalon(newRoom->id,messageRecu.header.idUtilisateur,"1");
 		//printf("Valeur idUser dans room %d\n", newRoom->idUser[0]);
 	}
 	displayListRoom();
 }
-void ackJoin (int idRoom, int idUser,int etat){
+void ackSalon (int idRoom, int idUser,int etat){
 	struct User *userMsgEnvoie;
 	struct Chat_message messageEnvoye;
 	userMsgEnvoie=findUser(idUser);
@@ -378,7 +404,6 @@ void ackJoin (int idRoom, int idUser,int etat){
 	messageEnvoye.header.idSalon=idRoom;
 	messageEnvoye.header.taille=sizeof(messageEnvoye.data);
 	messageEnvoye.header.numMessage=0;
-	
 	sendMessage(userMsgEnvoie->client_addr, messageEnvoye);
 }
 void leave(struct Header header ){
@@ -400,6 +425,11 @@ void leave(struct Header header ){
 			room=room->roomNext;
 		}
 	}
+	if (findUser==1){
+	  ackSalon(room->id,header.idUtilisateur,"1");
+	}
+	else
+	  ackSalon(room->id,header.idUtilisateur,"0");
 	displayListRoom();
 }
 
