@@ -17,8 +17,10 @@
 #define SERVER_PORT 1500
 #define MAX_MSG 80
 
-int sd;
+int sd,idUser, salonId;
 struct sockaddr_in client_addr, serv_addr;
+pthread_mutex_t mutexAck;
+int ackNeeded;
 
 int cmdStrToInt(char * str){
 	//printf("%s\n",str);
@@ -49,7 +51,7 @@ void *timer() {
 		usleep(15000000);
 		strcpy(msgKeepAlive.data,"");
 		msgKeepAlive.header.commande=6;
-		msgKeepAlive.header.idUtilisateur=1;
+		msgKeepAlive.header.idUtilisateur=idUser;
 		msgKeepAlive.header.timestamp=time(NULL);
 		msgKeepAlive.header.idSalon=1;
 		msgKeepAlive.header.taille=sizeof(msgKeepAlive.data);
@@ -68,15 +70,60 @@ void *timer() {
 void *msgServer(){
 	struct Chat_message msgServer;
 	int n;
+	struct Chat_message messageEnvoye;
 	socklen_t addr_len;
 	
 	addr_len = sizeof(serv_addr);
 	while(1){
 		n = recvfrom(sd, &msgServer, MAX_MSG, 0,(struct sockaddr *)&serv_addr, &addr_len);
-		if (n == -1)
-			perror("recvfrom");
+		if (n == -1){
+			if(ackNeeded != -1){
+					printf("Message non Envoyé\n");
+					pthread_mutex_unlock(&mutexAck);
+			}
+		}
 		else {
-			printf("received from %s: %s\n", inet_ntoa(serv_addr.sin_addr), msgServer.data);
+			if(msgServer.header.lastCommandeId == 1){
+				if(ackNeeded == 1){
+						ackNeeded = -1;
+						printf("ID salon = %s\n", msgServer.data);
+						salonId = atoi(msgServer.data);
+						pthread_mutex_unlock(&mutexAck);
+				}
+			}
+			else if(msgServer.header.lastCommandeId == 2){
+					if(ackNeeded == 2){
+							ackNeeded = -1;
+							pthread_mutex_unlock(&mutexAck);
+					}
+			}
+			else if(msgServer.header.lastCommandeId == 3){
+					if(ackNeeded == 3){
+							ackNeeded = -1;
+							printf("Salon quitté\n");
+							salonId = 0;
+							pthread_mutex_unlock(&mutexAck);
+					}
+			}
+			else if(msgServer.header.commande == 6){
+					strcpy(messageEnvoye.data,"1");
+					messageEnvoye.header.commande=6;
+					messageEnvoye.header.idUtilisateur=idUser;
+					messageEnvoye.header.timestamp=time(NULL);
+					messageEnvoye.header.idSalon=0;
+					messageEnvoye.header.taille=sizeof(messageEnvoye.data);
+					messageEnvoye.header.numMessage=1; 
+					if (sendto(sd, &messageEnvoye, sizeof(messageEnvoye) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1){
+						perror("sendto\n");
+						pthread_exit((void*) 1);
+					}
+			}
+			else if(msgServer.header.commande == 2)
+			{
+				printf("%s\n", inet_ntoa(serv_addr.sin_addr), msgServer.data);
+			}
+				//;
+			
 		}
 	}
 	pthread_exit(0);
@@ -85,6 +132,7 @@ void *msgServer(){
 	struct Chat_message msgConnection(struct Chat_message messageEnvoye){
 	strcpy(messageEnvoye.data,"test");
 	messageEnvoye.header.commande=CONNECT;
+	messageEnvoye.header.lastCommandeId = -1;
 	messageEnvoye.header.idUtilisateur=0;
 	messageEnvoye.header.timestamp=time(NULL);
 	messageEnvoye.header.idSalon=0;
@@ -104,10 +152,15 @@ void sendMsg(struct sockaddr_in client_addr, struct Chat_message messageEnvoye){
 
 void init(char *ip){
 	// Create socket
-	if ((sd = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
-	{
+	if ((sd = socket(PF_INET, SOCK_DGRAM, 0)) == -1){
 		perror("erreur ip: Creation de socket");
 		return 1;
+	}
+	struct timeval tv;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+	if (setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+		perror("Error");
 	}
 	// Bind socket
 	client_addr.sin_family = AF_INET;
@@ -142,7 +195,9 @@ int main (int argc, char *argv[]){
 	char commande[20] = "";
 	char data[TAILLEDATA] = "";
 	char *mot;
-	int n,idUser;
+	int n;
+	
+	
 	
 	messageEnvoye = msgConnection(messageEnvoye);
 
@@ -150,6 +205,8 @@ int main (int argc, char *argv[]){
 	
 	//Création, bind et Affectation du socket
 	init(argv[1]);
+	
+	
 	
 	// send connexion msg
 	sendMsg(client_addr,messageEnvoye);
@@ -177,9 +234,17 @@ int main (int argc, char *argv[]){
 		return 1;
 	}
 	
+	if(pthread_mutex_init(&mutexAck, NULL) != 0 ){
+			perror("mutex");
+			exit(1);
+	}
+	
+	pthread_mutex_lock(&mutexAck);
+	
+	ackNeeded = -1;
 	while(1){
 	//printf("debug: entree dans boucle while 1\n");
-
+		
 		if(fgets(buffer, 140, stdin) != NULL){
 			//printf("debug: fgets ok\n");
 			strcpy(saveBuffer, buffer);
@@ -213,12 +278,22 @@ int main (int argc, char *argv[]){
 		
 		messageEnvoye.header.idUtilisateur=idUser;
 		messageEnvoye.header.timestamp=time(NULL);
+		messageEnvoye.header.lastCommandeId = -1;
 		messageEnvoye.header.idSalon=1;
 		messageEnvoye.header.taille=sizeof(messageEnvoye.data);
 		messageEnvoye.header.numMessage=2;
 		
 		sendMsg(client_addr,messageEnvoye);
-
+		
+		if(cmdStrToInt(commande) == 4)
+				exit(0);
+		
+		ackNeeded = messageEnvoye.header.commande;
+		printf("ackNeeded = %d\n", ackNeeded);
+		pthread_mutex_lock(&mutexAck);
+		printf("Débloqué\n");
+		ackNeeded = -1;
+		
 	}
 	close(sd);
 	return 0;
