@@ -87,7 +87,7 @@ void *msgServer(){
 			if(msgServer.header.lastCommandeId == 1){
 				if(ackNeeded == 1){
 						ackNeeded = -1;
-						printf("ID salon = %s\n", msgServer.data);
+						printf("ID salon = %s\n", msgServer.header.idSalona);
 						salonId = msgServer.header.idSalon;
 						pthread_mutex_unlock(&mutexAck);
 				}
@@ -287,7 +287,8 @@ int main (int argc, char *argv[]){
 		messageEnvoye.header.idUtilisateur=idUser;
 		messageEnvoye.header.timestamp=time(NULL);
 		messageEnvoye.header.lastCommandeId = -1;
-		messageEnvoye.header.idSalon=1;
+		messageEnvoye.header.idSalon=salonId;
+		printf("SALON %d",salonId);
 		messageEnvoye.header.taille=sizeof(messageEnvoye.data);
 		messageEnvoye.header.numMessage=2;
 		
