@@ -6,9 +6,9 @@ Client: ClientChatBox.o ClientFunctions.o
 ClientFunctions.o: ClientFunctions.c
 	gcc -o $@ -c $< $(CFLAGS)
 ClientChatBox.o: ClientChatBox.c ClientFunctions.h protocole.h
-	gcc -o $@ -c $< $(CFLAGS)
+	gcc -o $@ -c $< $(CFLAGS) 
 Serveur: ServeurChatBox.o 
-	gcc -o $@ $^
+	gcc -o $@ $^ $(Th_Flag)
 ServeurChatBox.o: ServeurChatBox.c protocole.h
 	gcc -o $@ -c $< $(CFLAGS)
 clean:

@@ -21,7 +21,7 @@ int sd;
 struct sockaddr_in client_addr, serv_addr;
 
 int cmdStrToInt(char * str){
-	printf("%s\n",str);
+	//printf("%s\n",str);
 	if(strstr(str, "DISCONNECT") != NULL)
 		return 4;
 	else if(strstr(str, "JOIN") != NULL)
@@ -54,7 +54,7 @@ void *timer() {
 		msgKeepAlive.header.idSalon=1;
 		msgKeepAlive.header.taille=sizeof(msgKeepAlive.data);
 		msgKeepAlive.header.numMessage=1; 
-		if (sendto(sd, &msgKeepAlive, sizeof(msgKeepAlive) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1){
+		if (sendto(sd, &msgKeepAlive, sizeof(msgKeepAlive) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)		{
 			perror("sendto\n");
 			pthread_exit((void*) 1);
 		}
