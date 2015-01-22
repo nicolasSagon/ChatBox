@@ -3,13 +3,16 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "protocole.h"
+#include <pthread.h>
 #include <stdlib.h>
 #include "ServeurChatBox.h"
+
 
 #define SERVER_PORT 1500
 #define MAX_MSG 80
@@ -320,7 +323,6 @@ void say(struct Chat_message messageRecu){
 				messageEnvoye.header.numMessage=room->numMsg;
 				room->numMsg++;
 				for (i=0;i<maxUserSalon;i++){
-					printf("Boucle for\n");
 					if(room->idUser[i]!=NULL && room->idUser[i]!=messageRecu.header.idUtilisateur){
 						//printf("Message a envoyer a id :%d\n",room->idUser[i]);
 						// aller cherche clients adresse
@@ -433,22 +435,63 @@ void leave(struct Header header ){
 	displayListRoom();
 }
 
-void alive(struct Header header){
-
+void alive(struct Header header){ 
+	//Chercher utilisateur
+	struct User *user;
+	user=findUser(header.idUtilisateur);
+	//Modifie timeLastActivity si l'utisateur est connu
+	if (user!=NULL){
+		user->timeLastActivity=header.timestamp;
+	}
+	printf("Timstemp %d\n",user->timeLastActivity);
 }
 
 void ack(struct Chat_message messageRecu){
-
+	
 }
-
+void *verifAlive() {
+	//printf("Thread lancé\n");   //Debug
+	for (;;){
+		if (listUser->first!=NULL){
+			struct User *user=listUser->first;
+			usleep(5000000);
+			if (user->id !=0 ){
+				while (user->userNext != NULL ){
+					printf("User \n");
+					int disconnect=0;
+					/*disconnect=user->timeLastActivity+2;
+					
+					if (disconnect<= time(NULL)){
+					 	//appel disconnect
+					 
+					}*/
+					
+					user=user->userNext;
+				}
+			}else{
+				printf("USer non dispo\n");
+			}
+		}
+		else{
+			printf("USer non dispo\n");
+		}
+	}
+	pthread_exit(0);
+}
 
 int main(void)
 {
 
+  pthread_t th_alive;
   listUser = initalization();
   listRoom =initalizationRoom();
   int n;
   socklen_t addr_len;
+  //Création du Thread Alive
+	if (pthread_create(&th_alive, NULL, verifAlive, NULL) != 0){
+		perror("Erreur création du thread alive\n");
+		return 1;
+	}
   struct sockaddr_in client_addr, server_addr;
   struct Chat_message messageRecu;
   // Create socket
@@ -457,6 +500,8 @@ int main(void)
     perror("socket creation");
     return 1;
   }
+  
+  
   // Bind it
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = htonl(INADDR_ANY);

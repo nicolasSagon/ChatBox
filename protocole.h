@@ -41,6 +41,7 @@ struct User {
 	short unsigned int port;
 	char ipAdress[20];
 	struct sockaddr_in client_addr;
+	int timeLastActivity;
 };
 
 struct ListUser {

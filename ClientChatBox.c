@@ -56,7 +56,7 @@ void *timer() {
 		msgKeepAlive.header.idSalon=1;
 		msgKeepAlive.header.taille=sizeof(msgKeepAlive.data);
 		msgKeepAlive.header.numMessage=1; 
-		if (sendto(sd, &msgKeepAlive, sizeof(msgKeepAlive) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1){
+		if (sendto(sd, &msgKeepAlive, sizeof(msgKeepAlive) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)		{
 			perror("sendto\n");
 			pthread_exit((void*) 1);
 		}
