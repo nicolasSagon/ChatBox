@@ -41,6 +41,8 @@ int cmdStrToInt(char * str){
 		return 6;
 	else if(strstr(str, "MESSAGE_SERVER") != NULL)
 		return 7;
+	else if(strstr(str, "SWITCH") != NULL)
+		return 8;
 	else
 		return -1;
 }
@@ -87,7 +89,7 @@ void *msgServer(){
 			if(msgServer.header.lastCommandeId == 1){
 				if(ackNeeded == 1){
 						ackNeeded = -1;
-						printf("ID salon = %s\n", msgServer.header.idSalona);
+						//printf("ID salon = %s\n", msgServer.header.idSalon);
 						salonId = msgServer.header.idSalon;
 						pthread_mutex_unlock(&mutexAck);
 				}
@@ -103,6 +105,13 @@ void *msgServer(){
 							ackNeeded = -1;
 							printf("Salon quitté\n");
 							salonId = 0;
+							pthread_mutex_unlock(&mutexAck);
+					}
+			}
+			else if(msgServer.header.lastCommandeId == 8){
+					if(ackNeeded == 8){
+							ackNeeded = -1;
+							salonId = msgServer.header.idSalon;
 							pthread_mutex_unlock(&mutexAck);
 					}
 			}
@@ -122,6 +131,7 @@ void *msgServer(){
 			if(msgServer.header.commande == 7)
 			{
 				printf("\33[2K\r%s",msgServer.data);
+				printf("\a");
 				printf("%s : ", name);
 				fflush(stdout);
 			}
@@ -206,7 +216,6 @@ int main (int argc, char *argv[]){
 	int n;
 	
 	
-	
 	messageEnvoye = msgConnection(messageEnvoye);
 
 	printf("%s: trying to send to %s\n", argv[0], argv[1]);
@@ -288,7 +297,7 @@ int main (int argc, char *argv[]){
 		messageEnvoye.header.timestamp=time(NULL);
 		messageEnvoye.header.lastCommandeId = -1;
 		messageEnvoye.header.idSalon=salonId;
-		printf("SALON %d",salonId);
+		//printf("SALON %d",salonId);
 		messageEnvoye.header.taille=sizeof(messageEnvoye.data);
 		messageEnvoye.header.numMessage=2;
 		

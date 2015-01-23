@@ -30,7 +30,8 @@ enum Commande {
 	DISCONNECT = 4,
 	ACK = 5,
 	ALIVE = 6,
-	MESSAGE_SERVER = 7
+	MESSAGE_SERVER = 7,
+	SWITCH=8
 };
 
 struct User {
