@@ -23,8 +23,27 @@ pthread_mutex_t mutexAck;
 int ackNeeded;
 char name[25];
 
+
+int compareMot(char * mot) {
+	FILE* dico = fopen("insultes.txt","r");
+	char * line = NULL;
+	int i;
+	ssize_t read;
+	size_t len = 0;
+	if(mot != NULL){
+		while ((read = getline(&line, &len, dico)) != -1) {
+			if(strstr(mot,line) != NULL) {
+				close(dico);			
+				return 1;
+			}
+		}
+		close(dico);
+	}
+	return 0;
+}
+
+
 int cmdStrToInt(char * str){
-	//printf("%s\n",str);
 	if(strstr(str, "DISCONNECT") != NULL)
 		return 4;
 	else if(strstr(str, "JOIN") != NULL)
@@ -49,7 +68,6 @@ int cmdStrToInt(char * str){
 
 void *timer() {
 	struct Chat_message msgKeepAlive;
-	//printf("Thread lancé\n");   //Debug
 	for (;;){
 		usleep(15000000);
 		strcpy(msgKeepAlive.data,"");
@@ -62,9 +80,6 @@ void *timer() {
 		if (sendto(sd, &msgKeepAlive, sizeof(msgKeepAlive) + 1, 0,(struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)		{
 			perror("sendto\n");
 			pthread_exit((void*) 1);
-		}
-		else{
-			//printf("Je vole!!\n"); //Debug message Keep alive envoyé     
 		}
 	}
 	pthread_exit(0);
@@ -89,7 +104,6 @@ void *msgServer(){
 			if(msgServer.header.lastCommandeId == 1){
 				if(ackNeeded == 1){
 						ackNeeded = -1;
-						//printf("ID salon = %s\n", msgServer.header.idSalon);
 						salonId = msgServer.header.idSalon;
 						pthread_mutex_unlock(&mutexAck);
 				}
@@ -103,15 +117,24 @@ void *msgServer(){
 			else if(msgServer.header.lastCommandeId == 3){
 					if(ackNeeded == 3){
 							ackNeeded = -1;
-							printf("Salon quitté\n");
-							salonId = 0;
+							if(strcmp(msgServer.data,"1")==0){
+								printf("Salon changé\n");
+								salonId = 0;
+							}else{
+								printf("Erreur, salon non quité\n");
+							}
 							pthread_mutex_unlock(&mutexAck);
 					}
 			}
 			else if(msgServer.header.lastCommandeId == 8){
 					if(ackNeeded == 8){
 							ackNeeded = -1;
-							salonId = msgServer.header.idSalon;
+							if(strcmp(msgServer.data,"1")==0){
+								printf("Salon quitté\n");
+								salonId = msgServer.header.idSalon;
+							}else{
+								printf("Erreur, salon non changer\n");
+							}
 							pthread_mutex_unlock(&mutexAck);
 					}
 			}
@@ -131,11 +154,9 @@ void *msgServer(){
 			if(msgServer.header.commande == 7)
 			{
 				printf("\33[2K\r%s",msgServer.data);
-				printf("\a");
 				printf("%s : ", name);
 				fflush(stdout);
 			}
-				//;
 			
 		}
 	}
@@ -217,8 +238,6 @@ int main (int argc, char *argv[]){
 	
 	
 	messageEnvoye = msgConnection(messageEnvoye);
-
-	printf("%s: trying to send to %s\n", argv[0], argv[1]);
 	
 	//Création, bind et Affectation du socket
 	init(argv[1]);
@@ -260,10 +279,8 @@ int main (int argc, char *argv[]){
 	
 	ackNeeded = -1;
 	while(1){
-	//printf("debug: entree dans boucle while 1\n");
 		printf("%s : ", name);
 		if(fgets(buffer, 140, stdin) != NULL){
-			//printf("debug: fgets ok\n");
 			strcpy(saveBuffer, buffer);
 		}
 		else
@@ -276,28 +293,54 @@ int main (int argc, char *argv[]){
 
 		if(cmdStrToInt(commande) == -1){ //si cmd non définie
 			messageEnvoye.header.commande = 2; // c'est un SAY
-			strcpy(messageEnvoye.data, saveBuffer);
+			//strcpy(messageEnvoye.data, saveBuffer);
+			mot = strtok (NULL, " ");
+			if (compareMot(commande) == 1) {
+				strcat(data, "@!#~=§ ");
+			}
+			else
+			{
+				strcat(data, commande);
+				strcat(data, " ");
+			}
+			while (mot != NULL){ //Extraction de data
+				if (compareMot(mot) == 1)
+				{
+					strcat(data, "@!#~=§ ");
+				}
+				else
+				{
+					strcat(data, mot);
+					strcat(data, " ");
+				}
+				mot = strtok (NULL, " ");
+			}
+			strcpy(messageEnvoye.data, data);
 		}
 		else{
 			messageEnvoye.header.commande=cmdStrToInt(commande); //Affectation de la var cmd au message
 			
 			mot = strtok (NULL, " ");
 			while (mot != NULL){ //Extraction de data
-				strcat(data, mot);
-				strcat(data, " ");
+				if (compareMot(mot) == 1)
+				{
+					strcat(data, "@!#~=§ ");
+				}
+				else
+				{
+					strcat(data, mot);
+					strcat(data, " ");
+				}
 				mot = strtok (NULL, " ");
 			}
 			strcpy(messageEnvoye.data, data);
 		}
 		
-// 		printf("Commande = %i\n", messageEnvoye.header.commande);  //Debug
-// 		printf("Data = %s\n", messageEnvoye.data);  //Debug
-		
+		strcat(messageEnvoye.data, "\n");
 		messageEnvoye.header.idUtilisateur=idUser;
 		messageEnvoye.header.timestamp=time(NULL);
 		messageEnvoye.header.lastCommandeId = -1;
 		messageEnvoye.header.idSalon=salonId;
-		//printf("SALON %d",salonId);
 		messageEnvoye.header.taille=sizeof(messageEnvoye.data);
 		messageEnvoye.header.numMessage=2;
 		

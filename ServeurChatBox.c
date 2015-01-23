@@ -264,11 +264,11 @@ void switchSalon(struct Chat_message messageRecu){
 		  }
 	  }
 	  if (findUSer==1){
-	  	printf("envoyer%d\n",roomId);
+	  	//printf("envoyer%d\n",roomId);
 	 	ackSalon(roomId,messageRecu.header.idUtilisateur,"1", 4); 
 	  }else
 	  {
-	  	printf("NO envoyer");
+	  	//printf("NO envoyer");
 	  	ackSalon(0,messageRecu.header.idUtilisateur,"0", 4); 
 	  }
 }
@@ -523,11 +523,11 @@ void *verifAlive() {
 					user=user->userNext;
 				}
 			}else{
-				printf("USer non dispo\n");
+				//printf("USer non dispo\n");
 			}
 		}
 		else{
-			printf("USer non dispo\n");
+			//printf("USer non dispo\n");
 		}
 	}
 	pthread_exit(0);
